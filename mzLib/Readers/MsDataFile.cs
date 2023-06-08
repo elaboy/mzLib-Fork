@@ -16,15 +16,9 @@
 // You should have received a copy of the GNU Lesser General Public
 // License along with MassSpectrometry. If not, see <http://www.gnu.org/licenses/>.
 
-using Chemistry;
-using MzLibUtil;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using MassSpectrometry;
 
-namespace MassSpectrometry
+namespace Readers
 {
     // TODO: Define scope of class 
     // Class scope is to provide to the data loaded from the DataFile. 

@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using MassSpectrometry;
+using Readers;
 
 namespace Test.FileReadingTests
 {

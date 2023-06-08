@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Readers;
-using MassSpectrometry;
-using MzLibUtil;
+﻿using MzLibUtil;
 
 namespace Readers
 {
@@ -19,7 +12,7 @@ namespace Readers
                 ".raw" => new ThermoRawFileReader(filePath),
                 ".mzml" => new Mzml(filePath),
                 ".mgf" => new Mgf(filePath),
-                ".d" => new BrukerFileReader(filePath), 
+                ".d" => new BrukerFileReader(filePath),
                 _ => throw new MzLibException("File extension not supported."),
             };
         }

@@ -1,4 +1,5 @@
 ﻿using Chemistry;
+using Easy.Common.Extensions;
 using FlashLFQ;
 using MassSpectrometry;
 using MathNet.Numerics.Distributions;
@@ -10,7 +11,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Easy.Common.Extensions;
 using Test.FileReadingTests;
 using UsefulProteomicsDatabases;
 using ChromatographicPeak = FlashLFQ.ChromatographicPeak;
@@ -1067,12 +1067,12 @@ namespace Test
         [Test]
         public static void TestMedianPolish()
         {
-            double[][] array2D = new double[][] { 
+            double[][] array2D = new double[][] {
                 new double[] { 0, 0, 0 },
-                new double[] { 0, 1, 2 }, 
-                new double[] { 0, 3, 4 }, 
-                new double[] { 0, 5, 6 }, 
-                new double[] { 0, 7, 8 } 
+                new double[] { 0, 1, 2 },
+                new double[] { 0, 3, 4 },
+                new double[] { 0, 5, 6 },
+                new double[] { 0, 7, 8 }
             };
 
             FlashLfqResults.MedianPolish(array2D);
@@ -1779,7 +1779,7 @@ namespace Test
         [Test]
         public static void TestPairedSamplesQuantificationEngineThrowsNotImplemented()
         {
-                        ProteinGroup pg = new ProteinGroup("Accession", "Gene", "Organism");
+            ProteinGroup pg = new ProteinGroup("Accession", "Gene", "Organism");
             var p = new FlashLFQ.Peptide("PEPTIDE", "PEPTIDE", true, new HashSet<ProteinGroup> { pg });
 
             var files = new List<SpectraFileInfo>
@@ -1811,11 +1811,11 @@ namespace Test
 
             Assert.Throws<NotImplementedException>(() =>
             {
-                var engine = new ProteinQuantificationEngine(res, maxThreads: 1, 
-                    controlCondition: "a", randomSeed: 0, foldChangeCutoff: 0.1, pairedSamples:true);
+                var engine = new ProteinQuantificationEngine(res, maxThreads: 1,
+                    controlCondition: "a", randomSeed: 0, foldChangeCutoff: 0.1, pairedSamples: true);
                 engine.Run();
             });
         }
-        
+
     }
 }
