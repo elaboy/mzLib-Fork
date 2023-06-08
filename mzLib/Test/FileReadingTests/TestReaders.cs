@@ -18,6 +18,7 @@ namespace Test.FileReadingTests
     [ExcludeFromCodeCoverage]
     internal class TestReaders
     {
+
         [Test]
         [TestCase("DataFiles/small.RAW", 48, "Thermo nativeID format")]
         [TestCase("DataFiles/sliced_ethcd.raw", 6, "Thermo nativeID format")]

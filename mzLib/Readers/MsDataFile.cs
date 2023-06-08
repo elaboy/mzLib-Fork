@@ -26,7 +26,7 @@ namespace Readers
     /// <summary>
     /// A class for interacting with data collected from a Mass Spectrometer, and stored in a file
     /// </summary>
-    public abstract class MsDataFile
+    public abstract class MsDataFile : IDisposable
     {
         public MsDataScan[] Scans { get; set; }
         public SourceFile SourceFile { get; set; }
@@ -174,5 +174,29 @@ namespace Readers
         {
             return (Scans != null && Scans.Length > 0);
         }
+
+        public void Dispose()
+        {
+            Dispose();
+        }
+
+        //public void Dispose()
+        //{
+        //    Dispose(true);
+        //    GC.SuppressFinalize(this);
+        //}
+
+        //protected virtual void Dispose(bool disposing)
+        //{
+        //    if (disposing)
+        //    {
+        //        return;
+        //    }
+
+        //    if (disposing)
+        //    {
+        //        SourceFile.Dispose();  
+        //    }
+        //}
     }
 }

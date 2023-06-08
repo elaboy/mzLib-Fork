@@ -16,5 +16,10 @@ namespace Readers
                 _ => throw new MzLibException("File extension not supported."),
             };
         }
+
+        public static void CloseConnection(MsDataFile dataFile)
+        {
+            dataFile.SourceFile.Dispose();
+        }
     }
 }

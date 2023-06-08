@@ -670,7 +670,7 @@ namespace Readers
 
         public override void CloseDynamicConnection()
         {
-            if (reader != null)
+            if (reader == null)
             {
                 reader.Dispose();
             }

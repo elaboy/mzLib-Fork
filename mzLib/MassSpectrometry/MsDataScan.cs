@@ -157,11 +157,11 @@ namespace MassSpectrometry
             {
                 yield break;
             }
-            foreach (var haha in precursorSpectrum.Deconvolute(new MzRange(IsolationRange.Minimum - 8.5, IsolationRange.Maximum + 8.5),
+            foreach (var isotopicEnvelope in precursorSpectrum.Deconvolute(new MzRange(IsolationRange.Minimum - 8.5, IsolationRange.Maximum + 8.5),
                 minAssumedChargeState, maxAssumedChargeState, deconvolutionTolerancePpm, intensityRatio)
                                                   .Where(b => b.Peaks.Any(cc => isolationRange.Contains(cc.mz))))
             {
-                yield return haha;
+                yield return isotopicEnvelope;
             }
         }
 
