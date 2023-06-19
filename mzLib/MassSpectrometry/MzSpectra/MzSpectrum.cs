@@ -631,6 +631,7 @@ namespace MassSpectrometry
 
         public int GetClosestPeakIndex(double x)
         {
+            return (int)Chemistry.ClassExtensions.ClosestBinarySearch(XArray, x, Chemistry.ClassExtensions.BinarySearchParameters.Closest);
             int index = Array.BinarySearch(XArray, x);
             if (index >= 0)
             {

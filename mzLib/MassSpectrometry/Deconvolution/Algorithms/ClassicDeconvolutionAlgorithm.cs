@@ -102,7 +102,8 @@ namespace MassSpectrometry
                         double testMostIntenseMass = candidateForMostIntensePeakMz.ToMass(chargeState);
 
                         //get the index of the theoretical isotopic envelope for an averagine model that's close in mass
-                        int massIndex = Array.BinarySearch(mostIntenseMasses, testMostIntenseMass);
+                        //int massIndex = Array.BinarySearch(mostIntenseMasses, testMostIntenseMass);
+                        int massIndex = (int)Chemistry.ClassExtensions.ClosestBinarySearch(mostIntenseMasses, testMostIntenseMass, Chemistry.ClassExtensions.BinarySearchParameters.Closest);
                         if (massIndex < 0)
                         {
                             massIndex = ~massIndex;
@@ -256,7 +257,8 @@ namespace MassSpectrometry
             //we know the mass and the charge that we're looking for, just see if the expected m/z and its isotopes are there or not
             double mostAbundantIsotopeMzForThisZTheoretical = mostAbundantNeutralIsotopeToInvestigate.ToMz(zToInvestigate);
             //let's go find that peak!
-            int observedPeakIndex = spectrum.GetClosestPeakIndex(mostAbundantIsotopeMzForThisZTheoretical);
+            //int observedPeakIndex = spectrum.GetClosestPeakIndex(mostAbundantIsotopeMzForThisZTheoretical);
+            int observedPeakIndex = (int)Chemistry.ClassExtensions.ClosestBinarySearch(spectrum.XArray, mostAbundantIsotopeMzForThisZTheoretical, Chemistry.ClassExtensions.BinarySearchParameters.Closest);
 
             double mostAbundantIsotopeMzObserved = spectrum.XArray[observedPeakIndex];
             double mostAbundantIsotopeMassObserved = mostAbundantIsotopeMzObserved.ToMass(zToInvestigate);
