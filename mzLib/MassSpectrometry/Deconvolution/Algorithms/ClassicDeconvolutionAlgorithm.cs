@@ -103,7 +103,7 @@ namespace MassSpectrometry
 
                         //get the index of the theoretical isotopic envelope for an averagine model that's close in mass
                         //int massIndex = Array.BinarySearch(mostIntenseMasses, testMostIntenseMass);
-                        int massIndex = (int)Chemistry.ClassExtensions.ClosestBinarySearch(mostIntenseMasses, testMostIntenseMass, Chemistry.ClassExtensions.BinarySearchParameters.Closest);
+                        int massIndex = (int)Chemistry.ClassExtensions.ClosestBinarySearch(mostIntenseMasses, testMostIntenseMass);
                         if (massIndex < 0)
                         {
                             massIndex = ~massIndex;
@@ -259,15 +259,34 @@ namespace MassSpectrometry
             //let's go find that peak!
             //int observedPeakIndex = spectrum.GetClosestPeakIndex(mostAbundantIsotopeMzForThisZTheoretical);
             int observedPeakIndex = (int)Chemistry.ClassExtensions.ClosestBinarySearch(spectrum.XArray, mostAbundantIsotopeMzForThisZTheoretical, Chemistry.ClassExtensions.BinarySearchParameters.Closest);
+            double mostAbundantIsotopeMzObserved;
 
-            double mostAbundantIsotopeMzObserved = spectrum.XArray[observedPeakIndex];
+            if (observedPeakIndex > spectrum.XArray.Length -1)
+            {
+                mostAbundantIsotopeMzObserved = spectrum.XArray[observedPeakIndex-1];
+            }
+            else
+            {
+                mostAbundantIsotopeMzObserved = spectrum.XArray[observedPeakIndex];
+            }
             double mostAbundantIsotopeMassObserved = mostAbundantIsotopeMzObserved.ToMass(zToInvestigate);
             //make sure the expected and observed peak are within the mass tolerance
             if (Math.Abs(mostAbundantIsotopeMassObserved - mostAbundantNeutralIsotopeToInvestigate) / mostAbundantNeutralIsotopeToInvestigate * 1e6 <= deconvolutionTolerancePpm)
             {
+
+                IsotopicEnvelope test;
+
                 //get the isotopic envelope for this peak and add the masses from all the peaks of the envelope to the monoisotopic mass predictions
-                IsotopicEnvelope test = FindIsotopicEnvelope(massIndex, mostAbundantIsotopeMzObserved, spectrum.YArray[observedPeakIndex], mostAbundantIsotopeMassObserved,
-                    zToInvestigate, deconvolutionTolerancePpm, intensityRatioLimit, monoisotopicMassPredictions);
+                if (observedPeakIndex >= spectrum.XArray.Length -1)
+                {
+                    test = FindIsotopicEnvelope(massIndex, mostAbundantIsotopeMzObserved, spectrum.YArray[observedPeakIndex-1], mostAbundantIsotopeMassObserved,
+                        zToInvestigate, deconvolutionTolerancePpm, intensityRatioLimit, monoisotopicMassPredictions);
+                }
+                else
+                {
+                    test = FindIsotopicEnvelope(massIndex, mostAbundantIsotopeMzObserved, spectrum.YArray[observedPeakIndex], mostAbundantIsotopeMassObserved,
+                        zToInvestigate, deconvolutionTolerancePpm, intensityRatioLimit, monoisotopicMassPredictions);
+                }
 
                 //Add this isotope score to the original charge state score. We now have more peaks that support this mass than just the original isotopic envelope
                 //This is currently additive, which probably could be improved upon

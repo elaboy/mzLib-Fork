@@ -103,10 +103,11 @@ namespace Test
         #region Classic Deconvolution
 
         [Test]
-        [TestCase(586.2143122, 24, 41983672, 586.2)]//This is a lesser abundant charge state envelope at the low mz end
-        [TestCase(740.372202090153, 19, 108419280, 740.37)]//This is the most abundant charge state envelope
-        [TestCase(1081.385183, 13, 35454636, 1081.385)]//This is a lesser abundant charge state envelope at the high mz end
-        public void TestClassicDeconvolutionProteoformMultiChargeState(double selectedIonMz, int selectedIonChargeStateGuess, double selectedIonIntensity, double isolationMz)
+        [TestCase(586.2143122, 24, 41983672, 586.2, Chemistry.ClassExtensions.BinarySearchParameters.Closest)]//This is a lesser abundant charge state envelope at the low mz end
+        [TestCase(740.372202090153, 19, 108419280, 740.37, Chemistry.ClassExtensions.BinarySearchParameters.Closest)]//This is the most abundant charge state envelope
+        [TestCase(1081.385183, 13, 35454636, 1081.385, Chemistry.ClassExtensions.BinarySearchParameters.ClosestUp)]//This is a lesser abundant charge state envelope at the high mz end
+        public void TestClassicDeconvolutionProteoformMultiChargeState(double selectedIonMz, int selectedIonChargeStateGuess, double selectedIonIntensity,
+            double isolationMz, Chemistry.ClassExtensions.BinarySearchParameters position)
         {
             MsDataScan[] Scans = new MsDataScan[1];
 
@@ -137,7 +138,7 @@ namespace Test
             // The ones marked 2 are for checking an overload method
 
             DeconvolutionParameters deconParameters = new ClassicDeconvolutionParameters(1, 60, 4, 3);
-            Deconvoluter deconvoluter = new Deconvoluter(DeconvolutionType.ClassicDeconvolution, deconParameters);
+            Deconvoluter deconvoluter = new Deconvoluter(DeconvolutionType.ClassicDeconvolution, deconParameters, position);
 
             List<IsotopicEnvelope> isolatedMasses = scan.GetIsolatedMassesAndCharges(DeconvolutionType.ClassicDeconvolution, deconParameters).ToList();
             List<IsotopicEnvelope> isolatedMasses2 = scan.GetIsolatedMassesAndCharges(deconvoluter).ToList();

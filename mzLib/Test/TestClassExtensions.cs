@@ -73,9 +73,11 @@ namespace Test
         [TestCase(new double[] { 0.1, 0.2, 0.3, 0.4 }, 0.11, BinarySearchParameters.ClosestDown, 0)]
         [TestCase(new double[] { 0.1, 0.2, 0.3, 0.4 }, 0.22, BinarySearchParameters.ClosestUp, 2)]
         [TestCase(new double[] { 0.1, 0.2, 0.3, 0.4 }, 0.1, BinarySearchParameters.ClosestUp, 0)]
+
         public static void TestClosestBinarySearch(double[] array, double value, BinarySearchParameters position, double expected)
         {
-            //Console.WriteLine(Chemistry.ClassExtensions.ClosestBinarySearch(array, value, position));
+            Console.WriteLine("Supossed to be: " + expected);
+            Console.WriteLine("Got: "+Chemistry.ClassExtensions.ClosestBinarySearch(array, value, position));
             Assert.That(Chemistry.ClassExtensions.ClosestBinarySearch(array, value, position).Equals(expected));
         }
     }

@@ -22,12 +22,15 @@ namespace MassSpectrometry
         public DeconvolutionAlgorithm DeconvolutionAlgorithm { get; private set; }
         public DeconvolutionType DeconvolutionType { get; }
         public DeconvolutionParameters DeconvolutionParameters { get; }
+        public Chemistry.ClassExtensions.BinarySearchParameters BinarySearchParameters { get; }
 
-        public Deconvoluter(DeconvolutionType deconType, DeconvolutionParameters deconParameters)
+        public Deconvoluter(DeconvolutionType deconType, DeconvolutionParameters deconParameters,
+            Chemistry.ClassExtensions.BinarySearchParameters binarySearchParameters=Chemistry.ClassExtensions.BinarySearchParameters.Closest)
         {
             DeconvolutionParameters = deconParameters;
             DeconvolutionType = deconType;
             ConstructDeconvolutionAlgorithm(deconParameters);
+            BinarySearchParameters = binarySearchParameters;
         }
 
         /// <summary>
