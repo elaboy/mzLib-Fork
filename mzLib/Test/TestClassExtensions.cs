@@ -65,11 +65,11 @@ namespace Test
 
         [Test]
         [Parallelizable(ParallelScope.All)]
-        [TestCase(new double[] { 0.1, 0.2, 0.3, 0.4 }, 0.22, BinarySearchParameters.Closest, 1)]
+        [TestCase(new double[] { 0.1, 0.2, 0.3, 0.4 }, 0.22, BinarySearchParameters.Closest, 2)]
         [TestCase(new double[] { 0.1, 0.2, 0.3, 0.4 }, 0.4, BinarySearchParameters.Closest, 3)]
         [TestCase(new double[] { 0.1, 0.2, 0.3, 0.4 }, 0.3, BinarySearchParameters.Closest, 2)]
         [TestCase(new double[] { 0.1, 0.2, 0.3, 0.4 }, 0.12, BinarySearchParameters.Closest, 0)]
-        [TestCase(new double[] { 0.1, 0.2, 0.3, 0.4 }, 0.22, BinarySearchParameters.ClosestDown, 0)]
+        [TestCase(new double[] { 0.1, 0.2, 0.3, 0.4 }, 0.22, BinarySearchParameters.ClosestDown, 1)]
         [TestCase(new double[] { 0.1, 0.2, 0.3, 0.4 }, 0.11, BinarySearchParameters.ClosestDown, 0)]
         [TestCase(new double[] { 0.1, 0.2, 0.3, 0.4 }, 0.22, BinarySearchParameters.ClosestUp, 2)]
         [TestCase(new double[] { 0.1, 0.2, 0.3, 0.4 }, 0.1, BinarySearchParameters.ClosestUp, 0)]

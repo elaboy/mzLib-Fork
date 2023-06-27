@@ -258,7 +258,7 @@ namespace MassSpectrometry
             double mostAbundantIsotopeMzForThisZTheoretical = mostAbundantNeutralIsotopeToInvestigate.ToMz(zToInvestigate);
             //let's go find that peak!
             //int observedPeakIndex = spectrum.GetClosestPeakIndex(mostAbundantIsotopeMzForThisZTheoretical);
-            int observedPeakIndex = (int)Chemistry.ClassExtensions.ClosestBinarySearch(spectrum.XArray, mostAbundantIsotopeMzForThisZTheoretical, Chemistry.ClassExtensions.BinarySearchParameters.Closest);
+            int observedPeakIndex = (int)Chemistry.ClassExtensions.ClosestBinarySearch(spectrum.XArray, mostAbundantIsotopeMzForThisZTheoretical, Chemistry.ClassExtensions.BinarySearchParameters.ClosestUp);
             double mostAbundantIsotopeMzObserved;
 
             if (observedPeakIndex > spectrum.XArray.Length -1)

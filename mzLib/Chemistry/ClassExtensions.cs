@@ -79,27 +79,70 @@ namespace Chemistry
         /// <param name="value"></param>
         /// <returns></returns>
         public static double ClosestBinarySearch(this double[] xArray, double value,
-            BinarySearchParameters position=BinarySearchParameters.Closest)
+            BinarySearchParameters position = BinarySearchParameters.Closest)
         {
+            Array.Sort(xArray);
             var search = Array.BinarySearch(xArray, value);
 
             if (search >= 0)
             {
                 return search;
             }
-            else if(position.Equals(BinarySearchParameters.Closest))
+            else
             {
-                return xArray[~search - 1];
+                switch (position)
+                {
+                    case BinarySearchParameters.Closest:
+                        if (position.Equals(BinarySearchParameters.Closest) && (~search - 1) >= 0 && (~search + 1) <= xArray.Length - 1)
+                        {
+                            return ~search - 1;
+                        }
+                        else
+                        {
+                            return ~search;
+                        }
+
+                    case BinarySearchParameters.ClosestUp:
+                        if (position.Equals(BinarySearchParameters.ClosestUp) && (~search) <= xArray.Length - 1)
+                        {
+                            return ~search;
+                        }
+                        else
+                        {
+                            return ~search - 1;
+                        }
+
+                    case BinarySearchParameters.ClosestDown:
+                        if (position.Equals(BinarySearchParameters.ClosestDown) && (~search - 2) >= 0)
+                        {
+                            return ~search - 2;
+                        }
+                        else if(~search - 1 >= 0)
+                        {
+                            return ~search-1;
+                        }
+                        else 
+                        { 
+                            return ~search; 
+                        }
+
+                }
+                return 0;
+                //else if (position.Equals(BinarySearchParameters.Closest) && (~search - 1) > xArray.Length)
+                //    {
+                //        return ~search - 1;
+                //    }
+                //    else if (position.Equals(BinarySearchParameters.ClosestUp) && (~search) < xArray.Length)
+                //    {
+                //        return ~search;
+                //    }
+                //    else if (position.Equals(BinarySearchParameters.ClosestDown) && (~search - 1) > xArray.Length)
+                //    {
+                //        return ~search - 1;
+                //    }
+                //    return -99;
+
             }
-            else if(position.Equals(BinarySearchParameters.ClosestUp))
-            {
-                return xArray[~search + 1];
-            }
-            else if(position.Equals(BinarySearchParameters.ClosestDown))
-            {
-                return xArray[~search - 1];
-            }
-            return -99;
         }
 
         public enum BinarySearchParameters
