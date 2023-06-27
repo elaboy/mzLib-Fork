@@ -78,6 +78,7 @@ namespace Test
         {
             Console.WriteLine("Supossed to be: " + expected);
             Console.WriteLine("Got: "+Chemistry.ClassExtensions.ClosestBinarySearch(array, value, position));
+
             Assert.That(Chemistry.ClassExtensions.ClosestBinarySearch(array, value, position).Equals(expected));
         }
     }

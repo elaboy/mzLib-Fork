@@ -79,78 +79,25 @@ namespace Chemistry
         /// <param name="value"></param>
         /// <returns></returns>
         public static double ClosestBinarySearch(this double[] xArray, double value,
-            ClassExtensions.BinarySearchParameters position=BinarySearchParameters.Closest)
+            BinarySearchParameters position=BinarySearchParameters.Closest)
         {
             var search = Array.BinarySearch(xArray, value);
-            
+
             if (search >= 0)
             {
                 return search;
             }
-            else
+            else if(position.Equals(BinarySearchParameters.Closest))
             {
-                switch (position)
-                {
-                    case BinarySearchParameters.Closest:
-
-                        search = ~search;
-                        if (search < xArray.Length)
-                        {
-                            current = xArray[search];
-                        }
-                        else
-                        {
-                            current = xArray[search-1];
-
-                        }
-
-                        if (search > 0)
-                        {
-                            before = xArray[search - 1];
-                        }
-                        else
-                        {
-                            before = xArray[search];
-                        }
-
-                        if (search < xArray.Length - 1)
-                        {
-                            after = xArray[search + 1];
-                        }
-                        else
-                        {
-                            after = xArray[search-1];
-                        }
-
-                        if ((current - before) > (current - after) && (search) - 1 >= 0)
-                        {
-                            return (search) - 1;
-                        }
-                        //else if(Math.Abs(current - before) > Math.Abs(current - after))
-                        //{
-                        //    return ~search - 1;
-                        //}
-                        else
-                        {
-                            return search;
-                        }
-
-
-                    case BinarySearchParameters.ClosestDown:
-
-                        if ((~search) - 2 >= 0)
-                        {
-                            return (~search) - 2;
-                        }
-                        else
-                        {
-                            return (~search) - 1;
-                        }
-
-                    case BinarySearchParameters.ClosestUp:
-
-                        return ~search;
-                }
+                return xArray[~search - 1];
+            }
+            else if(position.Equals(BinarySearchParameters.ClosestUp))
+            {
+                return xArray[~search + 1];
+            }
+            else if(position.Equals(BinarySearchParameters.ClosestDown))
+            {
+                return xArray[~search - 1];
             }
             return -99;
         }
