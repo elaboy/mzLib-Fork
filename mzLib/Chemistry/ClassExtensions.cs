@@ -81,7 +81,7 @@ namespace Chemistry
         public static double ClosestBinarySearch(this double[] xArray, double value,
             BinarySearchParameters position = BinarySearchParameters.Closest)
         {
-            Array.Sort(xArray);
+            //Array.Sort(xArray);
             var search = Array.BinarySearch(xArray, value);
 
             if (search >= 0)
@@ -107,15 +107,12 @@ namespace Chemistry
                         {
                             return ~search;
                         }
-                        else
-                        {
-                            return ~search - 1;
-                        }
+                        return ~search;
 
                     case BinarySearchParameters.ClosestDown:
-                        if (position.Equals(BinarySearchParameters.ClosestDown) && (~search - 2) >= 0)
+                        if (position.Equals(BinarySearchParameters.ClosestDown) && (~search - 1) >= 0)
                         {
-                            return ~search - 2;
+                            return ~search - 1;
                         }
                         else if(~search - 1 >= 0)
                         {

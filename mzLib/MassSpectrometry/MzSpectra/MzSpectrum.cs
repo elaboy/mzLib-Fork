@@ -683,24 +683,26 @@ namespace MassSpectrometry
 
         public int NumPeaksWithinRange(double minX, double maxX)
         {
-            int startingIndex = Array.BinarySearch(XArray, minX);
-            if (startingIndex < 0)
-            {
-                startingIndex = ~startingIndex;
-            }
-            if (startingIndex >= Size)
-            {
-                return 0;
-            }
-            int endIndex = Array.BinarySearch(XArray, maxX);
-            if (endIndex < 0)
-            {
-                endIndex = ~endIndex;
-            }
-            if (endIndex == 0)
-            {
-                return 0;
-            }
+            int startingIndex = (int)Chemistry.ClassExtensions.ClosestBinarySearch(XArray, minX, Chemistry.ClassExtensions.BinarySearchParameters.Closest);
+            //int startingIndex = Array.BinarySearch(XArray, minX);
+            //if (startingIndex < 0)
+            //{
+            //    startingIndex = startingIndex;
+            //}
+            //if (startingIndex >= Size)
+            //{
+            //    return 0;
+            //}
+            int endIndex = (int)Chemistry.ClassExtensions.ClosestBinarySearch(XArray, maxX, Chemistry.ClassExtensions.BinarySearchParameters.ClosestUp);
+            //int endIndex = Array.BinarySearch(XArray, maxX);
+            //if (endIndex < 0)
+            //{
+            //    endIndex = endIndex;
+            //}
+            //if (endIndex == 0)
+            //{
+            //    return 0;
+            //}
 
             return endIndex - startingIndex;
         }

@@ -65,18 +65,13 @@ namespace MassSpectrometry
 
                     //Find what charge states this peak might be based on the spacing of nearby peaks (assumes isotopic resolution)
                     HashSet<int> allPossibleChargeStates = new HashSet<int>();
-                    for (int i = candidateForMostIntensePeakIndex + 1;
-                         i < spectrum.XArray.Length;
-                         i++) //look at peaks of higher m/z
+                    for (int i = candidateForMostIntensePeakIndex + 1; i < spectrum.XArray.Length; i++) //look at peaks of higher m/z
                     {
                         double deltaMass = spectrum.XArray[i] - candidateForMostIntensePeakMz;
-                        if (deltaMass <
-                            1.1) //if we're past a Th spacing, we're no longer looking at the closest isotope
+                        if (deltaMass < 1.1) //if we're past a Th spacing, we're no longer looking at the closest isotope
                         {
                             //get the lower bound charge state
-                            int charge =
-                                (int)Math.Floor(1 /
-                                                deltaMass); //e.g. deltaMass = 0.4 Th, charge is now 2 (but might be 3)
+                            int charge = (int)Math.Floor(1 / deltaMass); //e.g. deltaMass = 0.4 Th, charge is now 2 (but might be 3)
                             if (charge >= deconParams.MinAssumedChargeState && charge <= deconParams.MaxAssumedChargeState)
                             {
                                 allPossibleChargeStates.Add(charge);
@@ -102,8 +97,8 @@ namespace MassSpectrometry
                         double testMostIntenseMass = candidateForMostIntensePeakMz.ToMass(chargeState);
 
                         //get the index of the theoretical isotopic envelope for an averagine model that's close in mass
-                        //int massIndex = Array.BinarySearch(mostIntenseMasses, testMostIntenseMass);
-                        int massIndex = (int)Chemistry.ClassExtensions.ClosestBinarySearch(mostIntenseMasses, testMostIntenseMass);
+                        int massIndex = Array.BinarySearch(mostIntenseMasses, testMostIntenseMass);
+                        //int massIndex = (int)Chemistry.ClassExtensions.ClosestBinarySearch(mostIntenseMasses, testMostIntenseMass);
                         if (massIndex < 0)
                         {
                             massIndex = ~massIndex;
@@ -193,6 +188,7 @@ namespace MassSpectrometry
             {
                 double theorMassThatTryingToFind = theoreticalMasses[indexToLookAt] + differenceBetweenTheorAndActualMass; //get the expected mass of the next most intense peak
                 int closestPeakToTheorMass = spectrum.GetClosestPeakIndex(theorMassThatTryingToFind.ToMz(chargeState)); //find the experimental peak for that mass
+                //int closestPeakToTheorMass = (int)Chemistry.ClassExtensions.ClosestBinarySearch(spectrum.XArray, theorMassThatTryingToFind.ToMz(chargeState));
                 double closestPeakmz = spectrum.XArray[closestPeakToTheorMass];
                 double closestPeakIntensity = spectrum.YArray[closestPeakToTheorMass];
                 double closestPeakMass = closestPeakmz.ToMass(chargeState);
@@ -257,8 +253,8 @@ namespace MassSpectrometry
             //we know the mass and the charge that we're looking for, just see if the expected m/z and its isotopes are there or not
             double mostAbundantIsotopeMzForThisZTheoretical = mostAbundantNeutralIsotopeToInvestigate.ToMz(zToInvestigate);
             //let's go find that peak!
-            //int observedPeakIndex = spectrum.GetClosestPeakIndex(mostAbundantIsotopeMzForThisZTheoretical);
-            int observedPeakIndex = (int)Chemistry.ClassExtensions.ClosestBinarySearch(spectrum.XArray, mostAbundantIsotopeMzForThisZTheoretical, Chemistry.ClassExtensions.BinarySearchParameters.ClosestUp);
+            int observedPeakIndex = spectrum.GetClosestPeakIndex(mostAbundantIsotopeMzForThisZTheoretical);
+            //int observedPeakIndex = (int)Chemistry.ClassExtensions.ClosestBinarySearch(spectrum.XArray, mostAbundantIsotopeMzForThisZTheoretical);
             double mostAbundantIsotopeMzObserved;
 
             if (observedPeakIndex > spectrum.XArray.Length -1)
@@ -311,6 +307,7 @@ namespace MassSpectrometry
         private (int start, int end) ExtractIndices(double minX, double maxX)
         {
             int ind = Array.BinarySearch(spectrum.XArray, minX);
+            //int ind = (int)Chemistry.ClassExtensions.ClosestBinarySearch(spectrum.XArray, minX);
             if (ind < 0)
             {
                 ind = ~ind;
@@ -329,6 +326,7 @@ namespace MassSpectrometry
             {
                 return (1, 0);
             }
+            //    return (ind, 0);
         }
 
         private bool Peak2satisfiesRatio(double peak1theorIntensity, double peak2theorIntensity, double peak1intensity, double peak2intensity, double intensityRatio)

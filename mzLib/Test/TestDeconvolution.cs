@@ -24,6 +24,7 @@ namespace Test
         #region Old Deconvolution
 
         [Test]
+        [Parallelizable(ParallelScope.All)]
         [TestCase(586.2143122, 24, 41983672, 586.2)]//This is a lesser abundant charge state envelope at the low mz end
         [TestCase(740.372202090153, 19, 108419280, 740.37)]//This is the most abundant charge state envelope
         [TestCase(1081.385183, 13, 35454636, 1081.385)]//This is a lesser abundant charge state envelope at the high mz end
@@ -65,6 +66,7 @@ namespace Test
         }
 
         [Test]
+        [Parallelizable(ParallelScope.All)]
         [TestCase("APSGGKK", "12-18-17_frac7_calib_ms1_663_665.mzML", 2)]
         [TestCase("PKRKAEGDAKGDKAKVKDEPQRRSARLSAKPAPPKPEPKPKKAPAKKGEKVPKGKKGKADAGKEGNNPAENGDAKTDQAQKAEGAGDAK", "FXN11_tr1_032017-calib_ms1_scans716_718.mzML", 8)]
         [TestCase("PKRKVSSAEGAAKEEPKRRSARLSAKPPAKVEAKPKKAAAKDKSSDKKVQTKGKRGAKGKQAEVANQETKEDLPAENGETKTEESPASDEAGEKEAKSD", "FXN11_tr1_032017-calib_ms1_scans781_783.mzML", 16)]
@@ -103,6 +105,7 @@ namespace Test
         #region Classic Deconvolution
 
         [Test]
+        [Parallelizable(ParallelScope.All)]
         [TestCase(586.2143122, 24, 41983672, 586.2, Chemistry.ClassExtensions.BinarySearchParameters.Closest)]//This is a lesser abundant charge state envelope at the low mz end
         [TestCase(740.372202090153, 19, 108419280, 740.37, Chemistry.ClassExtensions.BinarySearchParameters.Closest)]//This is the most abundant charge state envelope
         [TestCase(1081.385183, 13, 35454636, 1081.385, Chemistry.ClassExtensions.BinarySearchParameters.Closest)]//This is a lesser abundant charge state envelope at the high mz end
@@ -153,6 +156,7 @@ namespace Test
         }
 
         [Test]
+        [Parallelizable(ParallelScope.All)]
         [TestCase("APSGGKK", "12-18-17_frac7_calib_ms1_663_665.mzML", 2)]
         [TestCase("PKRKAEGDAKGDKAKVKDEPQRRSARLSAKPAPPKPEPKPKKAPAKKGEKVPKGKKGKADAGKEGNNPAENGDAKTDQAQKAEGAGDAK", "FXN11_tr1_032017-calib_ms1_scans716_718.mzML", 8)]
         [TestCase("PKRKVSSAEGAAKEEPKRRSARLSAKPPAKVEAKPKKAAAKDKSSDKKVQTKGKRGAKGKQAEVANQETKEDLPAENGETKTEESPASDEAGEKEAKSD", "FXN11_tr1_032017-calib_ms1_scans781_783.mzML", 16)]
