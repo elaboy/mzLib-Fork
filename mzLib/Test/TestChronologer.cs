@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using NUnit.Framework;
 using Proteomics.RetentionTimePrediction;
 using TorchSharp;
+using TorchSharp.Modules;
 
 namespace Test
 {
@@ -14,11 +15,11 @@ namespace Test
         [Test]
         public void Test()
         {
-            //var rtModel = new Chonologer();
-            torch.load(
-                        @"C:\Users\Edwin\Documents\GitHub\mzLib-Fork\mzLib\Proteomics\RetentionTimePrediction\Chronologer_20220601193755.pt");
-            //var model = torch.jit.load(
-            //    @"C:\Users\Edwin\Documents\GitHub\mzLib-Fork\mzLib\Proteomics\RetentionTimePrediction\Chronologer_20220601193755.pt");
+            //var model = ExtensionMethodsForChonologer.InitializeChonologerModel(
+            //            @"C:\Users\Edwin\Documents\GitHub\mzLib-Fork\mzLib\Proteomics\RetentionTimePrediction\scripted_chronology_model.pt",
+            //            false);
+            var model = torch.jit.load(
+                @"C:\Users\Edwin\Documents\GitHub\mzLib-Fork\mzLib\Proteomics\RetentionTimePrediction\scripted_chronology_model.pt");
 
             var zero = 0;
         }
