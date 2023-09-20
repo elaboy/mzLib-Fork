@@ -1,16 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using Proteomics.RetentionTimePrediction;
 using TorchSharp;
 using TorchSharp.Modules;
 
 namespace Test
 {
-    public class TestChronologer
+    public class TestRTModels
     {
         [Test]
         public void Test()
@@ -22,6 +17,16 @@ namespace Test
                 @"C:\Users\Edwin\Documents\GitHub\mzLib-Fork\mzLib\Proteomics\RetentionTimePrediction\scripted_chronology_model.pt");
 
             var zero = 0;
+        }
+
+        [Test]
+        public void TestConstructor()
+        {
+            var model = new RTModels(Model.Chronologer);
+            model.RTPredictor.eval();
+
+
+            Assert.AreEqual(typeof(TorchSharp.Modules.Sequential), model.RTPredictor.GetType());
         }
     }
 }
