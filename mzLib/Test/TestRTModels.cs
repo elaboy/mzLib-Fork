@@ -28,5 +28,14 @@ namespace Test
 
             Assert.AreEqual(typeof(TorchSharp.Modules.Sequential), model.RTPredictor.GetType());
         }
+
+        //[Test]
+        //public void TestPrediction()
+        //{
+        //    var model = new RTModels(Model.Chronologer);
+        //    model.RTPredictor.eval();
+
+        //    model.RTPredictor.forward()
+        //}
     }
 }
