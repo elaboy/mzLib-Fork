@@ -14,7 +14,7 @@ namespace Proteomics.RetentionTimePrediction
     }
     public class RTModels
     {
-        public torch.nn.Module<torch.Tensor, torch.Tensor> RTPredictor { get; set; }
+        private torch.nn.Module<torch.Tensor, torch.Tensor> RTPredictor { get; set; }
 
         public RTModels(Model model)
         {
@@ -34,6 +34,12 @@ namespace Proteomics.RetentionTimePrediction
                 }
             }
 
+        }
+
+        public torch.Tensor predict(torch.Tensor input)
+        {
+            RTPredictor.eval();
+            return RTPredictor.forward(input);
         }
     }
 }
