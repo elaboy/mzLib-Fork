@@ -38,7 +38,7 @@ namespace Proteomics.RetentionTimePrediction
 
         public torch.Tensor predict(torch.Tensor input)
         {
-            RTPredictor.eval();
+            RTPredictor.
             return RTPredictor.forward(input);
         }
     }
