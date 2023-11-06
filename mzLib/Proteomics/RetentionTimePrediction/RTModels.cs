@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using TorchSharp;
@@ -38,8 +39,24 @@ namespace Proteomics.RetentionTimePrediction
 
         public torch.Tensor predict(torch.Tensor input)
         {
-            RTPredictor.
+            // RTPredictor.
             return RTPredictor.forward(input);
+        }
+    }
+
+    public class Chrono : torch.nn.Module<torch.Tensor, torch.Tensor, (torch.Tensor, torch.Tensor)>
+    {
+        private torch.jit.ScriptModule<torch.Tensor, torch.Tensor, (torch.Tensor, torch.Tensor)> m;
+        public Chrono(string filename) : base(nameof(Chrono))
+        {
+            m = torch.jit.load<torch.Tensor, torch.Tensor, (torch.Tensor, torch.Tensor)>(filename);
+        }
+
+
+        public override (torch.Tensor, torch.Tensor) forward(torch.Tensor input1, torch.Tensor input2)
+        {
+            // m.forward(input1, input2);
+            throw new NotImplementedException();
         }
     }
 }
