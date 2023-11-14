@@ -33,6 +33,8 @@ namespace Proteomics.RetentionTimePrediction
             long embedDim, long nBlocks, long kernel,
             long dropRate, string actFx) : base(nameof(Chonologer))
         {
+            RegisterComponents();
+
             VectorLength = vectorLength;
             NumberOfStates = nStates;
             EmbeddedDimensions = embedDim;
@@ -48,7 +50,6 @@ namespace Proteomics.RetentionTimePrediction
             torch.nn.init.kaiming_normal_(seq_embed.weight, nonlinearity:torch.nn.init.NonlinearityType.Linear);
             torch.nn.init.xavier_normal_(output.weight);
             torch.nn.init.constant_(output.bias, 0);
-            RegisterComponents();
 
         }
 
@@ -99,13 +100,14 @@ namespace Proteomics.RetentionTimePrediction
         public static string ActivationFunction { get; set; }
         public ResNetBlock(long in_channels, long out_channels, long kernel, long d_rate, string act_fx) : base(nameof(ResNetBlock))
         {
+            RegisterComponents();
+
             InChannels = in_channels;
             OutChannels = out_channels;
             Kernel = kernel;
             DropRate = d_rate;
             ActivationFunction = act_fx;
             SetNetworks();
-            RegisterComponents();
 
         }
 
