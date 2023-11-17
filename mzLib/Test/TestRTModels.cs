@@ -16,6 +16,7 @@ using CsvHelper.Configuration.Attributes;
 using CsvHelper.TypeConversion;
 using Easy.Common.Extensions;
 using Microsoft.ML;
+using Microsoft.ML.Transforms;
 using Microsoft.ML.Transforms.Onnx;
 using Microsoft.ML.Transforms.Text;
 using Nett;
@@ -26,6 +27,7 @@ using Proteomics.RetentionTimePrediction;
 using TorchSharp;
 using TorchSharp.Modules;
 using TorchSharp.Utils;
+using static TorchSharp.torch.utils;
 
 namespace Test
 {
@@ -169,12 +171,25 @@ namespace Test
         [Test]
         public void TestChronologer2()
         {
-            var Chronologer = new nnModules.Chronologer(52, 55, 64, 3, 7, (long)0.1, "relu");
+            //var Chronologer = new nnModules.Chronologer(52, 55, 64, 3, 7, (long)0.1, "relu");
 
-            Chronologer.modules().ForEach(x => x.modules().ForEach(i => Debug.WriteLine(i)));
-            
-            Chronologer.load(@"C:\Users\Edwin\Documents\GitHub\RT-DP\model_weights_Chronologer.dat", true);
-            Chronologer.eval();
+            //Chronologer.modules().ForEach(x => x.modules().ForEach(i => Debug.WriteLine(i)));
+            //var state_dict = Chronologer.state_dict();
+
+            //Chronologer.load(@"C:\Users\Edwin\Documents\GitHub\RT-DP\model_weights_Chronologer_new_module_names.dat",
+            //true);
+
+            ////Chronologer.save(@"F:\Research\Data\Chronologer\loadedWeightsCSharpModel.dat");
+
+
+            ////var new_model = new nnModules.Chronologer(52, 55, 64, 3, 7, (long)0.1, "relu");
+            ////new_model = (nnModules.Chronologer)new_model.load(@"F:\Research\Data\Chronologer\loadedWeightsCSharpModel.dat");
+            ////var new_state_dict = new_model.state_dict();
+            //foreach (var thing in Chronologer.state_dict())
+            //{
+            //    Debug.WriteLine(thing.Key + " " + thing.Value.ToString(TensorStringStyle.Julia));
+            //}
+            ////Chronologer.eval();
 
             var stream = new StreamReader(@"F:\Research\Data\Hela\predictedExample - Copy.tsv");
             var data = new CsvHelper.CsvReader(stream, Mapper.MapperConfig);
@@ -196,41 +211,92 @@ namespace Test
                 // Debug.WriteLine(tensor.tensor); 
             }
 
-            var tensor_example = torch.zeros(tensors.Count, 52, torch.ScalarType.Int64);
-            for (int i = 0; i < tensors.Count; i++)
-            {
-                var newTensor = torch.zeros(1, 52, torch.ScalarType.Int64);
-                newTensor[0] = tensors[i].tensor[0];
-                tensor_example[i] = newTensor[0];
-            }
+            
 
-            Debug.WriteLine(example.ToString(TensorStringStyle.Numpy));
-            Debug.WriteLine(example.shape);
-            Debug.WriteLine(tensor_example.print());
-            var lol = tensor_example[0].data<long>().ToArray();
-            foreach (var thing in lol)
-            {
-                Debug.WriteLine(thing);
-            }
-            Chronologer.train(false);
+            var tensor_example = torch.zeros(52*tensors.Count, torch.ScalarType.Int64);
+            var concatenatedTensors = torch.cat(tensors.Select(x => x.tensor).ToArray(), 0);
 
-            var dataset = tensor_example.tensor_split(2048, 0);
 
-            var prediction = Chronologer.call(dataset[0]);
+            //Chronologer.eval();
+            Debug.WriteLine(tensor_example.ToString(TensorStringStyle.Julia));
+            Debug.WriteLine(concatenatedTensors[0].ToString(TensorStringStyle.Julia));
+            //var sliced_tensor = concatenatedTensors.take_along_dim(torch.tensor(Enumerable.Range(0, 52).ToList(), torch.ScalarType.Int64));
+            //var prediction = Chronologer.call(concatenatedTensors[0]);
+            var model = new nnModules.RawChronologer();
+            model.load(@"C:\Users\Edwin\Documents\GitHub\RT-DP\model_weights_Chronologer_new_module_names.dat", true);
+          
+            model.eval();
+            model.train(false);
+            // using (torch.no_grad())
+            // {
 
-            var arch = Chronologer.named_modules();
-
-            Debug.WriteLine(prediction.ToString(TensorStringStyle.Numpy));
-
-            var prediction_values = prediction.data<float>().ToArray();
-
-            using (var writter = new StreamWriter(@"F:\Research\Data\Hela\predictedExample_fromCSharp.tsv"))
-            {
-                for (int i = 0; i < prediction_values.Length; i++)
+                var sadasd = model.state_dict();
+                for (int i = 0; i < 10; i++)
                 {
-                    writter.WriteLine(prediction_values[i]);
+                    var tt = concatenatedTensors[i].reshape(1, 52);
+                    // var batch = torch.cat(Enumerable.Range(0, 64).Select(x => tt).ToArray());
+                    Debug.WriteLine(tt.ToString(TensorStringStyle.Julia));
+                    // tt = torch.tensor(new List<long>(52){38, 11,  6, 10,  4,  1, 10, 18, 13, 10,  1, 11,  8, 18,  1,  8,  5, 10, 10, 10, 18,  3, 10, 11,
+                    //     7, 15, 44,  0,  0,  0,  0,  0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+                    //     0,  0,  0,  0 });
+                    var prediction2 = model.call(tt);
+                    Debug.WriteLine(prediction2.ToString(TensorStringStyle.Julia));
                 }
-            }
+
+                //foreach (var thing in sadasd)
+                //{
+                //    Debug.WriteLine(thing.Key + " " + thing.Value.ToString(TensorStringStyle.Julia));
+                //}
+            // }
+
+            
+            //foreach (var i in sadasd)
+            //{
+            //    Debug.WriteLine(i.Key + " " + i.Value.ToString(TensorStringStyle.Julia));
+            //}
+            // var tt = concatenatedTensors[0].reshape(1, 52);
+            // var prediction2 = model.call(tt);
+            // Debug.WriteLine(prediction2.ToString(TensorStringStyle.Julia));
+
+            //foreach (var thing in Chronologer.state_dict())
+            //{
+            //    Debug.WriteLine(thing.Key + " "+ thing.Value.ToString(TensorStringStyle.Julia));
+            //}
+            //var arch = Chronologer.named_modules();
+
+            //var f = new[]
+            //{
+            //    38, 9, 10, 4, 11, 3, 10, 9, 44, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            //    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+            //};
+
+            //var first = torch.zeros(52, torch.ScalarType.Int64);
+            //for (int i = 0; i < f.Length; i++)
+            //{
+            //    first[i] = f[i];
+            //}
+            //var first_rt = Chronologer.call(first);
+            //Debug.WriteLine(first.ToString(TensorStringStyle.Julia));
+            //Debug.WriteLine(first_rt.ToString(TensorStringStyle.Julia));
+
+            //var prediction_values = prediction.data<double>().ToArray();
+
+            //using (var writter = new StreamWriter(@"F:\Research\Data\Hela\predictedExample_fromCSharp.tsv"))
+            //{
+            //    for (int i = 0; i < prediction_values.Length; i++)
+            //    {
+            //        writter.WriteLine(prediction_values[i]);
+            //    }
+            //}
+        }
+
+        [Test]
+        public void RawChronologer()
+        {
+            var model = new nnModules.RawChronologer().load(@"C:\Users\Edwin\Documents\GitHub\RT-DP\model_weights_Chronologer_new_module_names.dat");
+            
+            var stateDict = model.state_dict();
         }
 
         internal class Mapper
