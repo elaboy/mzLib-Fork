@@ -23,6 +23,8 @@ using Nett;
 using NUnit.Framework;
 using OxyPlot;
 using pepXML.Generated;
+using Proteomics;
+using Proteomics.ProteolyticDigestion;
 using Proteomics.RetentionTimePrediction;
 using TorchSharp;
 using TorchSharp.Modules;
@@ -168,6 +170,7 @@ namespace Test
             Debug.WriteLine(prediction.ToString(TensorStringStyle.Numpy));
 
         }
+
         [Test]
         public void TestChronologer2()
         {
@@ -299,6 +302,45 @@ namespace Test
             var stateDict = model.state_dict();
         }
 
+        [Test]
+        public void CompareNoMods()
+        {
+            var data = Mapper.Read(@"F:\Research\Data\Hela\predictedExample - Copy2.tsv");
+
+            var model = new nnModules.RawChronologer();
+            model.load(@"C:\Users\Edwin\Documents\GitHub\RT-DP\model_weights_Chronologer_new_module_names.dat");
+            model.eval();
+            model.train(false);
+
+            var chronologerPredictions = new List<float>();
+            var ssRCalcPredictions = new List<double>();
+            var realRT = new List<double>();
+
+            foreach (var datum in data)
+            {
+                //chronologer
+                var prediction = model.call(datum.tensor);
+                chronologerPredictions.Add(prediction.data<float>().ToArray()[0]);
+
+                //ssrcalc
+                SSRCalc3 ssrCalc3 = new SSRCalc3("SSRCalc 3.0 (300A)", SSRCalc3.Column.A300);
+
+                var peptide = new PeptideWithSetModifications(datum.PeptideModSeq, new Dictionary<string, Modification>());
+                var ssrcalcOutput = ssrCalc3.ScoreSequence(peptide);
+                ssRCalcPredictions.Add(ssrcalcOutput);
+
+                //Read RT
+                realRT.Add(double.Parse(datum.ScanRetentionTime));
+
+            }
+        }
+
+        [Test]
+        public void CompareWithMods()
+        {
+            
+        }
+
         internal class Mapper
         {
             internal static CsvConfiguration MapperConfig => new CsvConfiguration(CultureInfo.InvariantCulture)
@@ -315,6 +357,7 @@ namespace Test
             public string CodedPeptideSeq { get; set; }
             public string PeptideLength { get; set; }
             public string Pred_HI { get; set; }
+            public string Q_value { get; set; }
 
             [TypeConverter(typeof(TensorConverter))]
             public torch.Tensor tensor { get; set; }
@@ -326,6 +369,11 @@ namespace Test
                 csv.NextRecord();
                 csv.WriteRecords(toWrite);
                 csv.Dispose();
+            }
+
+            internal static List<Mapper> Read(string path)
+            {
+                return new CsvReader(new StreamReader(path), MapperConfig).GetRecords<Mapper>().ToList();
             }
 
             internal class TensorConverter : DefaultTypeConverter
