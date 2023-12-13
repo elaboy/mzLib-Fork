@@ -22,14 +22,15 @@ using MassSpectrometry;
 using MzLibUtil;
 using NUnit.Framework;
 using Omics.Fragmentation;
+using Omics.Fragmentation.Peptide;
 using Proteomics;
 using Proteomics.AminoAcidPolymer;
-using Proteomics.Fragmentation;
 using Proteomics.ProteolyticDigestion;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using Omics.Digestion;
+using Omics.Modifications;
 using Stopwatch = System.Diagnostics.Stopwatch;
 
 namespace Test
