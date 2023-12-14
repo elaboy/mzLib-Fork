@@ -22,14 +22,14 @@ namespace MachineLearning.RetentionTimePredictionModels
             RegisterComponents();
         }
 
-        private torch.Tensor Encode(torch.Tensor source, torch.Tensor sourceMask)
+        public torch.Tensor Encode(torch.Tensor source, torch.Tensor sourceMask)
         {
             source = _sourceEmbedding.forward(source);
             source = _sourcePosition.forward(source);
             return _encoder.forward(source, sourceMask);
         }
 
-        private torch.Tensor Decode(torch.Tensor encoderOutput, torch.Tensor sourceMask, torch.Tensor target,
+        public torch.Tensor Decode(torch.Tensor encoderOutput, torch.Tensor sourceMask, torch.Tensor target,
             torch.Tensor targetMask)
         {
             target = _targetEmbedding.forward(target);
@@ -37,7 +37,7 @@ namespace MachineLearning.RetentionTimePredictionModels
             return _decoder.forward(target, encoderOutput, sourceMask, targetMask);
         }
 
-        private torch.Tensor Project(torch.Tensor decoderOutput)
+        public torch.Tensor Project(torch.Tensor decoderOutput)
         {
             return _projectionLayer.forward(decoderOutput);
         }
@@ -46,14 +46,6 @@ namespace MachineLearning.RetentionTimePredictionModels
         {
             throw new NotImplementedException();
         }
-
-        private Encoder _encoder;
-        private Decoder _decoder;
-        private InputEmbeddings _sourceEmbedding;
-        private InputEmbeddings _targetEmbedding;
-        private PositionalEncoder _sourcePosition;
-        private PositionalEncoder _targetPosition;
-        private ProjectionLayer _projectionLayer;
 
         public static Transformer BuildAARTN(int sourceVocabSize, int targetVocabSize,
             int sourceSequenceLength, int targetSequenceLength,
@@ -109,6 +101,35 @@ namespace MachineLearning.RetentionTimePredictionModels
 
             return transformer;
         }
+
+        public static void TrainAARTN(Transformer AARTNModel, List<(List<Tokenizer.Token>, double)> listOfTokensWithRT)
+        {
+            var model = AARTNModel;
+
+            var (trainingSet, validationSet, testSet) = 
+                Tokenizer.SplitDataIntoTrainingValidationAndTesting(listOfTokensWithRT);
+
+            //Divide into datasets
+            var trainValidateTestDb = new Dictionary<string, List<(torch.Tensor, double)>>()
+            {
+                { "train", new List<(torch.Tensor, double)>() },
+                { "validate", new List<(torch.Tensor, double)>() },
+                { "test", new List<(torch.Tensor, double)>() }
+            };
+
+            //Add data to database
+            trainValidateTestDb["train"].AddRange(trainingSet);
+
+        }
+
+        private Encoder _encoder;
+        private Decoder _decoder;
+        private InputEmbeddings _sourceEmbedding;
+        private InputEmbeddings _targetEmbedding;
+        private PositionalEncoder _sourcePosition;
+        private PositionalEncoder _targetPosition;
+        private ProjectionLayer _projectionLayer;
+
     }
 
     public class InputEmbeddings : torch.nn.Module<torch.Tensor, torch.Tensor>
