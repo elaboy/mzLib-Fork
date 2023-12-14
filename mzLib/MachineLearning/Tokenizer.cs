@@ -1,12 +1,8 @@
-﻿using System.Data;
-using Easy.Common.Extensions;
-using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.LinearAlgebra.Single;
-using Microsoft.ML;
-using Microsoft.ML.Data;
+﻿using Microsoft.ML;
+using System.Data;
 using UsefulProteomicsDatabases;
 
-namespace MachineLearning.RetentionTimePredictionModels;
+namespace MachineLearning;
 
 public static class Tokenizer
 {
@@ -14,7 +10,8 @@ public static class Tokenizer
     {
         var mlContext = new MLContext();
 
-        var unimodData = Loaders.LoadUnimod(@"F:\Research\Data\unimod.xml");
+        var unimodData = 
+            Loaders.LoadUnimod(Path.Combine(Directory.GetCurrentDirectory(), "unimod.xml"));
 
         var aa = new List<string>()
         {
@@ -37,7 +34,7 @@ public static class Tokenizer
 
         //var predictionEngine = mlContext.Model.CreatePredictionEngine<ResidueData, Token>(pipeline);
 
-        mlContext.Model.Save(pipeline, pipeline.GetOutputSchema(dataView.Schema), @"F:/Research/Data/AttentionIsAllRTNeeds/tokenizer.zip");
+        mlContext.Model.Save(pipeline, pipeline.GetOutputSchema(dataView.Schema), savingPath);
     }
 
     public static List<Token> Tokenize(List<string> listOfInputs, string modelPath)
@@ -50,13 +47,13 @@ public static class Tokenizer
         var dataView = mlContext.Data.LoadFromEnumerable(data);
 
         ITransformer tokenizer = mlContext.Model.Load(modelPath, out var modelI);
-        
+
         var predictionEngine = mlContext.Model.CreatePredictionEngine<ResidueData, Token>(tokenizer);
 
         var token = data.Select(x => predictionEngine.Predict(x));
 
         listOfTokens.AddRange(token.Select(x => x));
-        
+
 
         return listOfTokens;
     }
