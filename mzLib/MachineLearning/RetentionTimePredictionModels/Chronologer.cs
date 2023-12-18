@@ -2,11 +2,8 @@
 using Proteomics.PSM;
 using System.Data;
 using System.Diagnostics;
-using MathNet.Numerics.Statistics;
-using SkiaSharp;
 using TorchSharp;
 using TorchSharp.Modules;
-using TorchSharp.Utils;
 using static UsefulProteomicsDatabases.DictionaryBuilder;
 
 namespace MachineLearning.RetentionTimePredictionModels
@@ -48,61 +45,61 @@ namespace MachineLearning.RetentionTimePredictionModels
         {
             // if (data.Select(x => x).ToList() is List<PsmFromTsv> psmList)
             // {
-                var trainTestDb = new Dictionary<string, List<(torch.Tensor, double)>>()
+            var trainTestDb = new Dictionary<string, List<(torch.Tensor, double)>>()
                 {
                     { "train", new List<(torch.Tensor, double)>() },
                     {"validation", new List<(torch.Tensor, double)>()},
                     { "test", new List<(torch.Tensor, double)>() }
                 };
 
-                var allData = new List<(torch.Tensor, double)>();
+            var allData = new List<(torch.Tensor, double)>();
 
-                var sources = new HashSet<string>();
+            var sources = new HashSet<string>();
 
-                foreach (var dataFile in data)
+            foreach (var dataFile in data)
+            {
+                if (dataFile.DecoyContamTarget.Equals("T"))
                 {
-                    if (dataFile.DecoyContamTarget.Equals("T"))
+                    var db =
+                        (dataFile.FileNameWithoutExtension, dataFile.RetentionTime,
+                            dataFile.BaseSeq); //base seq for the moment
+
+                    var tensor = Tensorize(dataFile);
+
+                    if (tensor.Equals(torch.ones(1, 52, torch.ScalarType.Int64)))
+                        continue;
+
+                    if (tensor[0][0].item<Int64>().Equals((Int64)38))
                     {
-                        var db =
-                            (dataFile.FileNameWithoutExtension, dataFile.RetentionTime,
-                                dataFile.BaseSeq); //base seq for the moment
-
-                        var tensor = Tensorize(dataFile);
-
-                        if (tensor.Equals(torch.ones(1, 52, torch.ScalarType.Int64)))
-                            continue;
-
-                        if (tensor[0][0].item<Int64>().Equals((Int64)38))
-                        {
-                            allData.Add((tensor, db.RetentionTime.Value)); //todo: add encoded sequence tensor
-                            sources.Add(db.FileNameWithoutExtension);
-                        }
+                        allData.Add((tensor, db.RetentionTime.Value)); //todo: add encoded sequence tensor
+                        sources.Add(db.FileNameWithoutExtension);
                     }
                 }
-
-                allData = allData.Randomize().ToList();
-
-                var trainingSet = allData.Take((int)(allData.Count * (1 - validationFraction))).ToList();
-
-                var validationSet = allData.Skip((int)(allData.Count * (1 - validationFraction)))
-                    .Take((int)(allData.Count * (1 - testingFraction))).ToList();
-
-                var testSet = allData.Skip((int)(allData.Count * (1 - validationFraction))).ToList();
-
-                trainTestDb["train"] = trainingSet;
-                trainTestDb["validation"] = validationSet;
-                trainTestDb["test"] = testSet;
-
-                TrainingDataset = new TorchDataset(trainTestDb["train"], "Encoded Sequence", "Retention Time on File");
-                ValidationDataset = new TorchDataset(trainTestDb["validation"], "Encoded Sequence", "Retention Time on File");
-                TestingDataset = new TorchDataset(trainTestDb["test"], "Encoded Sequence", "Retention Time on File");
-
-                CreateDataLoader(batchSize);
             }
-            // else
-            // {
-            //     throw new System.ArgumentException("Object is not of type List<PsmFromTsv>", nameof(data));
-            // }
+
+            allData = allData.Randomize().ToList();
+
+            var trainingSet = allData.Take((int)(allData.Count * (1 - validationFraction))).ToList();
+
+            var validationSet = allData.Skip((int)(allData.Count * (1 - validationFraction)))
+                .Take((int)(allData.Count * (1 - testingFraction))).ToList();
+
+            var testSet = allData.Skip((int)(allData.Count * (1 - validationFraction))).ToList();
+
+            trainTestDb["train"] = trainingSet;
+            trainTestDb["validation"] = validationSet;
+            trainTestDb["test"] = testSet;
+
+            TrainingDataset = new TorchDataset(trainTestDb["train"], "Encoded Sequence", "Retention Time on File");
+            ValidationDataset = new TorchDataset(trainTestDb["validation"], "Encoded Sequence", "Retention Time on File");
+            TestingDataset = new TorchDataset(trainTestDb["test"], "Encoded Sequence", "Retention Time on File");
+
+            CreateDataLoader(batchSize);
+        }
+        // else
+        // {
+        //     throw new System.ArgumentException("Object is not of type List<PsmFromTsv>", nameof(data));
+        // }
 
         protected override void CreateDataLoader(int batchSize)
         {
@@ -144,7 +141,7 @@ namespace MachineLearning.RetentionTimePredictionModels
             var optimizer = torch.optim.Adam(parameters, 0.001);
 
             var scores = new List<float>();
-            
+
             //training loop
             for (int i = 0; i < epochs; i++)
             {
@@ -223,7 +220,7 @@ namespace MachineLearning.RetentionTimePredictionModels
                     batchX = batchX.to(device);
                     batchY = batchY.to(device);
 
-                    for(int i = 0; i < batchX.size(0); i++)
+                    for (int i = 0; i < batchX.size(0); i++)
                     {
                         var output = this.Predict(batchX[i]);
                         var loss = criterion.forward(output[0], batchY[i]);
@@ -415,6 +412,13 @@ namespace MachineLearning.RetentionTimePredictionModels
 
             return input;
         }
+
+        /// <summary>
+        /// Defines the behavior of the module during training phase.
+        /// </summary>
+        public abstract void Train1(string modelSavingPath, List<PsmFromTsv> trainingData,
+                           Dictionary<(char, string), int> dictionary, DeviceType device, float validationFraction,
+                           float testingFraction, int batchSize, int epochs, int patience);
         //All Modules (shortcut modules are for loading the weights only)
         private Embedding seq_embed = torch.nn.Embedding(55, 64, 0);
         private torch.nn.Module<torch.Tensor, torch.Tensor> conv_layer_1 = torch.nn.Conv1d(64, 64, 1, Padding.Same, dilation: 1);

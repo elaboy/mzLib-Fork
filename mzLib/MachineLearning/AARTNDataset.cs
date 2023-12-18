@@ -11,8 +11,12 @@ namespace MachineLearning
         public override (torch.Tensor, double) GetTensor(long index)
         {
             var sourceTargetPair = _dataset.ElementAt((int)index);
-            var sequence = sourceTargetPair.Item1;
+            var sequence = sourceTargetPair.Item1.Select(x => x.Features);
             var target = sourceTargetPair.Item2;
+
+            var tensorizedSequence = torch.from_array(sequence.ToArray());
+
+            return (tensorizedSequence, target);
         }
 
         public AARTNDataset(List<(List<Token>, double)> dataset,
@@ -25,6 +29,7 @@ namespace MachineLearning
             //Make engine and save to object
             var tokenizerEngine = mlContext.Model.CreatePredictionEngine<ResidueData, Token>(
                 mlContext.Model.Load(tokenizerPath, out var modelI));
+            
             _tokenizer = tokenizerEngine;
 
             //Save padding token
