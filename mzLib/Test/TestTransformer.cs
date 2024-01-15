@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using MachineLearning.RetentionTimePredictionModels;
 using MachineLearning.Transformer;
 using MachineLearning.TransformerComponents;
 
@@ -51,32 +52,38 @@ namespace Test
 
         }
 
+        //[Test]
+        //public void TestTraining()
+        //{
+        //    var psms = 
+        //        Readers.SpectrumMatchTsvReader
+        //            .ReadPsmTsv(@"D:/AI_Datasets/Hela1_AllPSMs.psmtsv",
+        //                out var warnings);
+
+        //    var tokens = new List<(List<Tokenizer.Token>, double)>();
+
+        //    Parallel.ForEach(psms, psm =>
+        //    {
+
+        //        var psmTokens = Tokenizer.Tokenize(psm.FullSequence,
+        //            @"D:/AI_Datasets/Tokenizer.zip");
+
+        //        var token = (psmTokens, psm.RetentionTime.Value);
+
+        //        tokens.Add(token);
+        //        Debug.WriteLine(psm.FullSequence + " " + tokens.Count);
+        //    });
+
+        //    var model = Transformer.BuildAARTN(tokens.First().Item1.First().Features.Length,
+        //        1, 60, 1);
+
+        //}
+
         [Test]
-        public void TestTraining()
+        public void TestEnsambleModel()
         {
-            var psms = 
-                Readers.SpectrumMatchTsvReader
-                    .ReadPsmTsv(@"D:/AI_Datasets/Hela1_AllPSMs.psmtsv",
-                        out var warnings);
-
-            var tokens = new List<(List<Tokenizer.Token>, double)>();
-
-            Parallel.ForEach(psms, psm =>
-            {
-
-                var psmTokens = Tokenizer.Tokenize(psm.FullSequence,
-                    @"D:/AI_Datasets/Tokenizer.zip");
-
-                var token = (psmTokens, psm.RetentionTime.Value);
-
-                tokens.Add(token);
-                Debug.WriteLine(psm.FullSequence + " " + tokens.Count);
-            });
-
-            var model = Transformer.BuildAARTN(tokens.First().Item1.First().Features.Length,
-                1, 60, 1);
-
-
+            var model = AARTN.EnsambleModel(21, 21,
+                25, 25);
         }
     }
 }

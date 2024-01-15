@@ -416,9 +416,10 @@ namespace MachineLearning.RetentionTimePredictionModels
         /// <summary>
         /// Defines the behavior of the module during training phase.
         /// </summary>
-        public abstract void Train1(string modelSavingPath, List<PsmFromTsv> trainingData,
-                           Dictionary<(char, string), int> dictionary, DeviceType device, float validationFraction,
-                           float testingFraction, int batchSize, int epochs, int patience);
+        //public abstract void Train1(string modelSavingPath, List<PsmFromTsv> trainingData,
+        //                   Dictionary<(char, string), int> dictionary, DeviceType device, float validationFraction,
+        //                   float testingFraction, int batchSize, int epochs, int patience);
+
         //All Modules (shortcut modules are for loading the weights only)
         private Embedding seq_embed = torch.nn.Embedding(55, 64, 0);
         private torch.nn.Module<torch.Tensor, torch.Tensor> conv_layer_1 = torch.nn.Conv1d(64, 64, 1, Padding.Same, dilation: 1);

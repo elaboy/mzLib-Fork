@@ -1,4 +1,5 @@
-﻿using TorchSharp;
+﻿using MachineLearning.TransformerComponents;
+using TorchSharp;
 using TorchSharp.Modules;
 
 namespace MachineLearning.Transformer;

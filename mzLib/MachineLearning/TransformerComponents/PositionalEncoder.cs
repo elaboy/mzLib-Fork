@@ -11,22 +11,15 @@ public class PositionalEncoder : torch.nn.Module<torch.Tensor, torch.Tensor>
         //Create vector of shape (sequenceLenth, dModel)
         var positionalEncoding = torch.zeros(sequenceLenth, dModel);
         //Create tensor of shape (sequenceLenth, 1)
-        var position = torch.arange(0, sequenceLenth).unsqueeze(1);
+        var position = torch.arange(0, sequenceLenth, torch.float32).unsqueeze(1);
         //Division term
-        var divTerm = torch.exp(
-            torch.arange(0, dModel, 2) * (-Math.Log(10000.0) / dModel));
+        var divTerm = torch.exp(torch.arange(0, dModel, 2) * (-Math.Log(10000.0) / dModel));
 
         //Apply the sin to even indices and cos to odd indices
-        var counter = 0;
-        for (int i = 0; i < dModel; i += 2)
-        {
-            if (i.IsEven())
-                positionalEncoding[counter, i] = torch.sin(position * divTerm);
-            else if (i.IsOdd())
-                positionalEncoding[counter, i] = torch.cos(position * divTerm);
 
-            counter = counter + 1;
-        }
+        positionalEncoding[torch.TensorIndex.Colon, torch.TensorIndex.Slice(0,null, 2)] = torch.sin(position * divTerm);
+        positionalEncoding[torch.TensorIndex.Colon, torch.TensorIndex.Slice(1,null, 2)] = torch.cos(position * divTerm);
+
         _positionalEncoding = positionalEncoding.unsqueeze(0); //becomes (1, sequenceLenth, dModel)
         register_buffer("positionalEncoding", _positionalEncoding);
     }
