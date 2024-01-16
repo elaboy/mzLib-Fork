@@ -1,6 +1,8 @@
 ﻿using Easy.Common.Extensions;
 using Microsoft.ML;
 using System.Data;
+using System.Diagnostics.Metrics;
+using Microsoft.ML.Data;
 using UsefulProteomicsDatabases;
 
 namespace MachineLearning;
@@ -58,8 +60,13 @@ public static class Tokenizer
         };
 
         //List of mods/residues
-        var listOfResidues = unimodData.Select(x => new ResidueData() { Residue = x.IdWithMotif }).ToList();
-        listOfResidues.AddRange(aa.Select(x => new ResidueData() { Residue = x }));
+        var listOfResidues = unimodData
+            .Select(x => new ResidueData() { Residue = x.IdWithMotif })
+            .ToList();
+        
+        listOfResidues
+            .AddRange(aa.Select(x => new ResidueData() { Residue = x }));
+        
         listOfResidues.Add(new ResidueData() { Residue = "PAD" }); //padding token
 
         //dataview is needed for the tokenization
@@ -112,10 +119,23 @@ public static class Tokenizer
         ITransformer tokenizer = mlContext.Model.Load(modelPath, out var modelI);
 
         var predictionEngine = mlContext.Model.CreatePredictionEngine<ResidueData, Token>(tokenizer);
-
+        
         var token = toBeTokens.Select(x => predictionEngine.Predict(x));
+        
+        long counter = 1;
 
-        listOfTokens.AddRange(token.Select(x => x));
+        //foreach (var toke in token))
+        //{
+        //    listOfTokens.Add(new Token() { Features = toke.Features, Id = counter });
+        //    counter++;
+        //}
+
+        listOfTokens
+            .AddRange(token
+            .Select(x => new Token()
+                {Residue = x.Residue, 
+                Features = x.Features,
+                Id = x.Residue == "PAD" ? 0 : counter++ })); //
 
         return listOfTokens;
     }
@@ -152,6 +172,8 @@ public static class Tokenizer
 
     public class Token : ResidueData
     {
+        [NoColumn]
+        public long? Id { get; set; }
         public float[] Features { get; set; }
     }
 }

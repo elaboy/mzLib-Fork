@@ -1,14 +1,15 @@
 ﻿using Microsoft.ML;
 using TorchSharp;
+using TorchSharp.Modules;
 using static MachineLearning.Tokenizer;
 
 namespace MachineLearning
 {
-    public class AARTNDataset : torch.utils.data.Dataset<(torch.Tensor, double)>
+    public class AARTNDataset : torch.utils.data.Dataset
     {
         public override long Count => _dataset.Count;
 
-        public override (torch.Tensor, double) GetTensor(long index)
+        public override Dictionary<string, torch.Tensor> GetTensor(long index)
         {
             var sourceTargetPair = _dataset.ElementAt((int)index);
             var sequence = sourceTargetPair.Item1.Select(x => x.Features);
@@ -16,11 +17,11 @@ namespace MachineLearning
 
             var tensorizedSequence = torch.from_array(sequence.ToArray());
 
-            return (tensorizedSequence, target);
+            return new Dictionary<string, torch.Tensor>(){{target.ToString(), tensorizedSequence}};
         }
 
         public AARTNDataset(List<(List<Token>, double)> dataset,
-            string tokenizerPath, int sequenceLength = 60)
+            string tokenizerPath, int sequenceLength = 60) : base()
         {
             MLContext mlContext = new MLContext();
             
@@ -33,11 +34,11 @@ namespace MachineLearning
             _tokenizer = tokenizerEngine;
 
             //Save padding token
-            _paddingToken = _tokenizer.Predict(new Token() { Residue = "PAD" });
+            PaddingToken = _tokenizer.Predict(new Token() { Residue = "PAD", Id = 0 });
         }
 
         private List<(List<Token>, double)> _dataset;
         private PredictionEngine<ResidueData, Token> _tokenizer;
-        private Token _paddingToken;
+        public Token PaddingToken;
     }
 }

@@ -84,6 +84,11 @@ namespace Test
                 25, 25);
         }
 
+        [Test]
+        public void TestTrainTransformer()
+        {
+
+        }
 
     }
 }
