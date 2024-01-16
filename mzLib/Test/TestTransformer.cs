@@ -1,12 +1,9 @@
 ﻿using MachineLearning;
+using MachineLearning.RetentionTimePredictionModels;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
-using MachineLearning.RetentionTimePredictionModels;
-using MachineLearning.Transformer;
-using MachineLearning.TransformerComponents;
 
 namespace Test
 {
@@ -15,11 +12,12 @@ namespace Test
         [Test]
         public void TestTrainTokenizer()
         {
-            Tokenizer.TrainTokenizer(@"D:/AI_Datasets/tokenizer.zip");
+            Tokenizer.TrainTokenizer(@"D:/AI_Datasets/tokenizerCommonBiologicalAndArtifacts.zip",
+                TokenizerModType.CommonBiologicalAndArtifacts);
         }
 
         [Test]
-        public void TestTokenize()
+        public void TestTokenizer()
         {
             var listOfInputs = new List<string>()
             {
@@ -38,24 +36,24 @@ namespace Test
 
             List<(List<Tokenizer.Token>, double)> tokens = new();
 
-            Parallel.ForEach(psms, psm =>
+            foreach(var psm in psms)
             {
 
-                var psmTokens =Tokenizer.Tokenize(psm.FullSequence,
-                    @"D:/AI_Datasets/Tokenizer.zip");
+                var psmTokens = Tokenizer.Tokenize(psm.FullSequence,
+                    @"D:/AI_Datasets/tokenizerCommonBiologicalAndArtifacts.zip");
 
                 var token = (psmTokens, psm.RetentionTime.Value);
 
                 tokens.Add(token);
                 Debug.WriteLine(psm.FullSequence + " " + tokens.Count);
-            });
+            }
 
         }
 
         //[Test]
         //public void TestTraining()
         //{
-        //    var psms = 
+        //    var psms =
         //        Readers.SpectrumMatchTsvReader
         //            .ReadPsmTsv(@"D:/AI_Datasets/Hela1_AllPSMs.psmtsv",
         //                out var warnings);
@@ -85,5 +83,7 @@ namespace Test
             var model = AARTN.EnsambleModel(21, 21,
                 25, 25);
         }
+
+
     }
 }

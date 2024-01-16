@@ -42,8 +42,10 @@ namespace MachineLearning.RetentionTimePredictionModels
             }
 
             //Create the enconder and the decorder 
-            var encoder = new Encoder(torch.nn.ModuleList<EncoderBlock>(encoderBlocks.Select(x => x).ToArray()));
-            var decoder = new Decoder(torch.nn.ModuleList<DecoderBlock>(decoderBlocks.Select(x => x).ToArray()));
+            var encoder = new Encoder(torch.nn.ModuleList<EncoderBlock>(encoderBlocks
+                .Select(x => x).ToArray()));
+            var decoder = new Decoder(torch.nn.ModuleList<DecoderBlock>(decoderBlocks
+                .Select(x => x).ToArray()));
 
             //Create the projection layer
             var projectionLayer = new ProjectionLayer(dModel, targetVocabSize);

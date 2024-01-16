@@ -1,26 +1,60 @@
-﻿using Microsoft.ML;
+﻿using Easy.Common.Extensions;
+using Microsoft.ML;
 using System.Data;
-using Easy.Common.Extensions;
-using TorchSharp;
 using UsefulProteomicsDatabases;
 
 namespace MachineLearning;
 
+public enum TokenizerModType
+{
+    Everything,
+    Uniprot,
+    CommonBiological,
+    CommonArtifacts,
+    LessCommonMods,
+    Metals,
+    CommonBiologicalAndArtifacts
+}
+
 public static class Tokenizer
 {
-    public static void TrainTokenizer(string savingPath)
+    public static void TrainTokenizer(string savingPath, TokenizerModType modificationType)
     {
         var mlContext = new MLContext();
 
         var unimodData =
             Loaders.LoadUnimod(Path.Combine(Directory.GetCurrentDirectory(), "unimod.xml")).ToList();
-                //.Where( x => x.ModificationType == "UniProt").ToList(); //Uniprot and AAs
+        //.Where( x => x.ModificationType == "UniProt").ToList(); //Uniprot and AAs
+
+        switch (modificationType)
+        {
+            case TokenizerModType.Everything:
+                break;
+            case TokenizerModType.Uniprot:
+                unimodData = unimodData.Where(x => x.ModificationType == "UniProt").ToList();
+                break;
+            case TokenizerModType.CommonBiological:
+                unimodData = unimodData.Where(x => x.ModificationType == "Common Biological").ToList();
+                break;
+            case TokenizerModType.CommonArtifacts:
+                unimodData = unimodData.Where(x => x.ModificationType == "Common Artifact").ToList();
+                break;
+            case TokenizerModType.LessCommonMods:
+                unimodData = unimodData.Where(x => x.ModificationType == "Less Common").ToList();
+                break;
+            case TokenizerModType.Metals:
+                unimodData = unimodData.Where(x => x.ModificationType == "Metals").ToList();
+                break;
+            case TokenizerModType.CommonBiologicalAndArtifacts:
+                unimodData = unimodData.Where(x => x.ModificationType == "Common Biological" ||
+                                                   x.ModificationType == "Common Artifact").ToList();
+                break;
+        }
 
         var aa = new List<string>()
         {
             "A", "C", "D", "E", "F", "G", "H", "I", "K",
             "L", "M", "N", "P", "Q", "R", "S", "T", "V", "W", "Y"
-
         };
 
         //List of mods/residues
@@ -50,20 +84,17 @@ public static class Tokenizer
 
         List<ResidueData> toBeTokens = new();
 
-        var splitItem = listOfInputs.Split(new []{'[', ']'});
+        var splitItem = listOfInputs.Split(new[] { '[', ']' });
 
         foreach (var item in splitItem)
         {
             if (item.Contains(' '))
-            {
-                toBeTokens.Add(new ResidueData(){Residue = item});
-            }
+                toBeTokens.Add(new ResidueData() { Residue = item });
+
             else
             {
                 foreach (var residue in item)
-                {
-                    toBeTokens.Add(new ResidueData(){Residue = residue.ToString()});
-                }
+                    toBeTokens.Add(new ResidueData() { Residue = residue.ToString() });
             }
         }
 
@@ -71,10 +102,9 @@ public static class Tokenizer
         {
             //padding
             var pad = 60 - toBeTokens.Count;
+
             for (int i = 0; i < pad; i++)
-            {
-                toBeTokens.Add(new ResidueData() { Residue = "PAD"});
-            }
+                toBeTokens.Add(new ResidueData() { Residue = "PAD" });
         }
 
         var dataView = mlContext.Data.LoadFromEnumerable(toBeTokens);
@@ -87,26 +117,30 @@ public static class Tokenizer
 
         listOfTokens.AddRange(token.Select(x => x));
 
-
         return listOfTokens;
     }
 
     /// <summary>
     /// Train, Validation, Testing split of dataset
     /// </summary>
-    public static (List<(List<Token>, double)>, List<(List<Token>, double)>, List<(List<Token>, double)>) 
-        SplitDataIntoTrainingValidationAndTesting(List<(List<Token>, double)> dataset, double trainingFraction = 0.8,
-            double testingFraction = 0.1, double validationFraction = 0.1)
+    public static (List<(List<Token>, double)>, List<(List<Token>, double)>, List<(List<Token>, double)>)
+        SplitDataIntoTrainingValidationAndTesting(List<(List<Token>, double)> dataset,
+            double trainingFraction = 0.8, double testingFraction = 0.1, double validationFraction = 0.1)
     {
         var randomizedData = dataset.Randomize().ToList();
 
-        var trainingSet = randomizedData.Take((int)(randomizedData.Count * (1 - validationFraction))).ToList();
+        var trainingSet = randomizedData
+            .Take((int)(randomizedData.Count * (1 - validationFraction)))
+            .ToList();
 
-        var validationSet = 
-            randomizedData.Skip((int)(randomizedData.Count * (1 - validationFraction)))
-            .Take((int)(randomizedData.Count * (1 - testingFraction))).ToList();
+        var validationSet = randomizedData
+            .Skip((int)(randomizedData.Count * (1 - validationFraction)))
+            .Take((int)(randomizedData.Count * (1 - testingFraction)))
+            .ToList();
 
-        var testSet = randomizedData.Skip((int)(randomizedData.Count * (1 - validationFraction))).ToList();
+        var testSet = randomizedData
+            .Skip((int)(randomizedData.Count * (1 - validationFraction)))
+            .ToList();
 
         return (trainingSet, validationSet, testSet);
     }
