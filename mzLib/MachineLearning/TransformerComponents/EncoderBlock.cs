@@ -6,7 +6,8 @@ namespace MachineLearning.TransformerComponents;
 
 public class EncoderBlock : torch.nn.Module<torch.Tensor, torch.Tensor, torch.Tensor>
 {
-    public EncoderBlock(MultiHeadAttentionBlock selfAttentionBlock, FeedForwardBlock feedForwardBlock, double dropout) : base(nameof(EncoderBlock))
+    public EncoderBlock(MultiHeadAttentionBlock selfAttentionBlock, FeedForwardBlock feedForwardBlock, double dropout) 
+        : base(nameof(EncoderBlock))
     {
         _selfAttentionBlock = selfAttentionBlock;
         _feedForwardBlock = feedForwardBlock;

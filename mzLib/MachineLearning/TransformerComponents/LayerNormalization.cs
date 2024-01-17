@@ -15,7 +15,7 @@ public class LayerNormalization : torch.nn.Module<torch.Tensor, torch.Tensor>
 
     public override torch.Tensor forward(torch.Tensor input)
     {
-        var mean = input.mean(new long[] { -1 }, true);
+        var mean = input.mean(new long[]{-1}, true);
         var std = input.std(-1, true);
         var norm = (input - mean) / (std + _eps);
         return _alpha * norm + _beta;

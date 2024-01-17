@@ -28,30 +28,30 @@ public static class Tokenizer
             Loaders.LoadUnimod(Path.Combine(Directory.GetCurrentDirectory(), "unimod.xml")).ToList();
         //.Where( x => x.ModificationType == "UniProt").ToList(); //Uniprot and AAs
 
-        switch (modificationType)
-        {
-            case TokenizerModType.Everything:
-                break;
-            case TokenizerModType.Uniprot:
-                unimodData = unimodData.Where(x => x.ModificationType == "UniProt").ToList();
-                break;
-            case TokenizerModType.CommonBiological:
-                unimodData = unimodData.Where(x => x.ModificationType == "Common Biological").ToList();
-                break;
-            case TokenizerModType.CommonArtifacts:
-                unimodData = unimodData.Where(x => x.ModificationType == "Common Artifact").ToList();
-                break;
-            case TokenizerModType.LessCommonMods:
-                unimodData = unimodData.Where(x => x.ModificationType == "Less Common").ToList();
-                break;
-            case TokenizerModType.Metals:
-                unimodData = unimodData.Where(x => x.ModificationType == "Metals").ToList();
-                break;
-            case TokenizerModType.CommonBiologicalAndArtifacts:
-                unimodData = unimodData.Where(x => x.ModificationType == "Common Biological" ||
-                                                   x.ModificationType == "Common Artifact").ToList();
-                break;
-        }
+        //switch (modificationType)
+        //{
+        //    case TokenizerModType.Everything:
+        //        break;
+        //    case TokenizerModType.Uniprot:
+        //        unimodData = unimodData.Where(x => x.ModificationType == "UniProt").ToList();
+        //        break;
+        //    case TokenizerModType.CommonBiological:
+        //        unimodData = unimodData.Where(x => x.ModificationType == "Common Biological").ToList();
+        //        break;
+        //    case TokenizerModType.CommonArtifacts:
+        //        unimodData = unimodData.Where(x => x.ModificationType == "Common Artifact").ToList();
+        //        break;
+        //    case TokenizerModType.LessCommonMods:
+        //        unimodData = unimodData.Where(x => x.ModificationType == "Less Common").ToList();
+        //        break;
+        //    case TokenizerModType.Metals:
+        //        unimodData = unimodData.Where(x => x.ModificationType == "Metals").ToList();
+        //        break;
+        //    case TokenizerModType.CommonBiologicalAndArtifacts:
+        //        unimodData = unimodData.Where(x => x.ModificationType == "Common Biological" ||
+        //                                           x.ModificationType == "Common Artifact").ToList();
+        //        break;
+        //}
 
         var aa = new List<string>()
         {
@@ -145,6 +145,32 @@ public static class Tokenizer
     /// </summary>
     public static (List<(List<Token>, double)>, List<(List<Token>, double)>, List<(List<Token>, double)>)
         SplitDataIntoTrainingValidationAndTesting(List<(List<Token>, double)> dataset,
+            double trainingFraction = 0.8, double testingFraction = 0.1, double validationFraction = 0.1)
+    {
+        var randomizedData = dataset.Randomize().ToList();
+
+        var trainingSet = randomizedData
+            .Take((int)(randomizedData.Count * (1 - validationFraction)))
+            .ToList();
+
+        var validationSet = randomizedData
+            .Skip((int)(randomizedData.Count * (1 - validationFraction)))
+            .Take((int)(randomizedData.Count * (1 - testingFraction)))
+            .ToList();
+
+        var testSet = randomizedData
+            .Skip((int)(randomizedData.Count * (1 - validationFraction)))
+            .ToList();
+
+        return (trainingSet, validationSet, testSet);
+    }
+
+    /// <summary>
+    /// Train, Validation, Testing split of dataset
+    /// </summary>
+    public static (List<(FeaturizedTokens[], double)>, List<(FeaturizedTokens[], double)>,
+        List<(FeaturizedTokens[], double)>)
+        SplitDataIntoTrainingValidationAndTesting(List<(FeaturizedTokens[], double)> dataset,
             double trainingFraction = 0.8, double testingFraction = 0.1, double validationFraction = 0.1)
     {
         var randomizedData = dataset.Randomize().ToList();

@@ -16,7 +16,7 @@ public class InputEmbeddings : torch.nn.Module<torch.Tensor, torch.Tensor>
 
     public override torch.Tensor forward(torch.Tensor input)
     {
-        return _embedding.forward(input) * Math.Sqrt(_dModel);
+        return _embedding.forward(input.to_type(torch.ScalarType.Int64)) * Math.Sqrt(_dModel);
     }
 
     private Embedding _embedding;
