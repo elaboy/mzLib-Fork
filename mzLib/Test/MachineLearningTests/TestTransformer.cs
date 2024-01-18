@@ -16,7 +16,7 @@ using TorchSharp.Modules;
 using UsefulProteomicsDatabases;
 using static TorchSharp.torch;
 
-namespace Test
+namespace Test.MachineLearningTests
 {
     public class TestTransformer
     {
@@ -47,7 +47,7 @@ namespace Test
 
             List<(List<Tokenizer.Token>, double)> tokens = new();
 
-            foreach(var psm in psms)
+            foreach (var psm in psms)
             {
 
                 var psmTokens = Tokenizer.Tokenize(psm.FullSequence,
@@ -197,8 +197,8 @@ namespace Test
                 featurizedTokens.Add(predictionEngine.Predict(token));
             }
 
-             mlContext.Model.Save(transformer, transformer.GetOutputSchema(dataView.Schema), 
-                 @"D:/AI_Datasets/testingTokenizerUnimod.zip");
+            mlContext.Model.Save(transformer, transformer.GetOutputSchema(dataView.Schema),
+                @"D:/AI_Datasets/testingTokenizerUnimod.zip");
         }
 
         [Test]
@@ -243,7 +243,7 @@ namespace Test
                     if (dictionary.ContainsKey(subItem))
                     {
                         var features = predictionEngine.Predict(new Tokens()
-                            { Id = dictionary[subItem], Token = subItem });
+                        { Id = dictionary[subItem], Token = subItem });
                         psmTokenized.Add(features);
                     }
                 }
@@ -256,7 +256,8 @@ namespace Test
                 featuresWithRetentionTime.Add((psmTokenized.ToArray(), psm.RetentionTime.Value));
             }
 
-            var model = AARTN.EnsambleModel(842400, 1, 842400, 1);
+            var model = AARTN.EnsambleModel(2708, 1, 150, 1);
+            model.save(@"D:/AI_Datasets/TransformerModel1182024.zip");
 
             var (trainingSet, validationSet, testSet) =
                 Tokenizer.SplitDataIntoTrainingValidationAndTesting(featuresWithRetentionTime);
@@ -265,11 +266,11 @@ namespace Test
             var validationDataset = new AARTNDataset(validationSet);
             var testingDataset = new AARTNDataset(testSet);
 
-            var trainingDataLoader = new DataLoader(trainingDataset,1, shuffle: true, null, 1, 1, true);
+            var trainingDataLoader = new DataLoader(trainingDataset, 1, shuffle: true, null, 1, 1, true);
 
-            var optimizer = torch.optim.Adam(model.parameters(), 0.001);
+            var optimizer = optim.Adam(model.parameters(), 0.001);
 
-            var lossFunction = torch.nn.CrossEntropyLoss(
+            var lossFunction = nn.CrossEntropyLoss(
                                ignore_index: dictionary["PaddingToken"]);
 
             foreach (var batch in trainingDataLoader)
