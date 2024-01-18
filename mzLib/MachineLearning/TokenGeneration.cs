@@ -1,11 +1,10 @@
-﻿using System.Text;
-using Proteomics.PSM;
+﻿using Proteomics.PSM;
 
 namespace MachineLearning
 {
     public static class TokenGeneration
     {
-        public const string RETENTION_TIME_START_TOKEN= "<RT>";
+        public const string RETENTION_TIME_START_TOKEN = "<RT>";
         public const string PADDING_TOKEN = "<PAD>";
         public const string END_OF_RETENTION_TIME_TOKEN = "</RT>";
         public const string START_OF_SEQUENCE_TOKEN = "<SOS>";
@@ -24,7 +23,7 @@ namespace MachineLearning
 
             tokenList.Add(END_OF_RETENTION_TIME_TOKEN);
             tokenList.Add(START_OF_SEQUENCE_TOKEN);
-            var fullSequenceSplit = fullSequence.Split('[',']');
+            var fullSequenceSplit = fullSequence.Split('[', ']');
             foreach (var item in fullSequenceSplit)
             {
                 if (!item.Contains(" "))
@@ -58,10 +57,10 @@ namespace MachineLearning
         {
             var numberAsString = number.ToString();
             var integerAndDecimalsSplit = numberAsString.Split('.');
-            
+
             var integerPart = integerAndDecimalsSplit[0];
             var integerPartLength = integerPart.Length;
-            
+
             var decimalPart = integerAndDecimalsSplit[1];
             var decimalPartLength = decimalPart.Length;
 

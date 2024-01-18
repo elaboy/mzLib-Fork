@@ -22,7 +22,7 @@ namespace Test.MachineLearningTests
 
             List<List<string>> tokens = new();
 
-            foreach (var psm in psms.Where(x => x.AmbiguityLevel=="1"))
+            foreach (var psm in psms.Where(x => x.AmbiguityLevel == "1"))
             {
                 tokens.Add(TokenGeneration.TokenizeRetentionTimeWithFullSequence(psm, 160));
             }
