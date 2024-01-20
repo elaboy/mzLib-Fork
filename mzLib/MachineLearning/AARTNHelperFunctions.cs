@@ -117,6 +117,6 @@ namespace MachineLearning
 
     public class FeaturizedTokens : Tokens 
     {
-        public float[] Features { get; set; }
+        public long[] Features { get; set; }
     }
 }

@@ -15,6 +15,7 @@ using TorchSharp;
 using TorchSharp.Modules;
 using UsefulProteomicsDatabases;
 using static TorchSharp.torch;
+using TensorStringStyle = TorchSharp.TensorStringStyle;
 
 namespace Test.MachineLearningTests
 {
@@ -151,6 +152,59 @@ namespace Test.MachineLearningTests
                 var records = csv.GetRecords<Tokens>().ToList();
             }
 
+        }
+
+        [Test]
+        public void TestTokenLoadFromCSVFileV2()
+        {
+            List<Tokens> tokens = new List<Tokens>();
+            using (var reader = new StreamReader(@"D:\AI_Datasets\VocabularyForTransformerUnimod_V2.csv"))
+            using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+            {
+                tokens.AddRange(csv.GetRecords<Tokens>().ToList());
+            }
+
+            var embeddingLayer = torch.nn.Embedding(tokens.Count(), 512, padding_idx: 4);
+            Debug.WriteLine(embeddingLayer.forward(torch.tensor(tokens.First().Id))
+                .ToString(TensorStringStyle.Julia));
+        }
+
+        [Test]
+        public void TestTokenLoadFromCSVFileV2WithRealExample()
+        {
+            List<Tokens> tokens = new List<Tokens>();
+            using (var reader = new StreamReader(@"D:\AI_Datasets\VocabularyForTransformerUnimod_V2.csv"))
+            using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+            {
+                tokens.AddRange(csv.GetRecords<Tokens>().ToList());
+            }
+
+            var psms = Readers.SpectrumMatchTsvReader.ReadPsmTsv(
+                @"D:/AI_Datasets/Hela1_AllPSMs.psmtsv", out var warnings);
+
+            var tokenizedPsm = 
+                TokenGeneration.TokenizeRetentionTimeWithFullSequence(psms.First(), 160);
+
+            var tokenizedPsmIds = new List<int>();
+
+            foreach (var token in tokenizedPsm)
+            {
+                if (int.TryParse(token[0].ToString(), out var result))
+                {
+                    foreach (var subString in token)
+                        tokenizedPsmIds.Add(tokens.Find(x => x.Token == subString.ToString()).Id);
+                }
+                else
+                    tokenizedPsmIds.Add(tokens.Find(x => x.Token == token).Id);
+            }
+
+            var embeddingLayer = torch.nn.Embedding(tokens.Count(), 512, padding_idx: 0);
+
+            var tensor = TokenGeneration.PaddingTensor(torch.tensor(tokenizedPsmIds), 200);
+
+            Debug.WriteLine(embeddingLayer.forward(tensor)
+                .ToString(TensorStringStyle.Julia));
+            tokenizedPsm.ForEach(x => Debug.Write(x+" "));
         }
 
         [Test]

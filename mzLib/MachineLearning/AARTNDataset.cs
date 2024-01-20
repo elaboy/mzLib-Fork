@@ -6,11 +6,11 @@ namespace MachineLearning
 {
     public class AARTNDataset : torch.utils.data.Dataset
     {
-        public override long Count => _dataset2.Count;
+        public override long Count => _dataset.Count;
 
         public override Dictionary<string, torch.Tensor> GetTensor(long index)
         {
-            var sourceTargetPair = _dataset2.ElementAt((int)index);
+            var sourceTargetPair = _dataset.ElementAt((int)index);
 
             var encoderInput = torch.from_array(sourceTargetPair.Item1
                 .SelectMany(x => x.Features).ToArray());
@@ -37,7 +37,7 @@ namespace MachineLearning
         {
             MLContext mlContext = new MLContext();
 
-            _dataset = dataset;
+            //_dataset = dataset;
 
             //Make engine and save to object
             var tokenizerEngine = mlContext.Model.CreatePredictionEngine<ResidueData, Token>(
@@ -51,7 +51,7 @@ namespace MachineLearning
 
         public AARTNDataset(List<(FeaturizedTokens[], double)> dataset) : base()
         {
-            _dataset2 = dataset;
+            _dataset = dataset;
 
             //_tokenizer = tokenizer;
 
@@ -59,8 +59,8 @@ namespace MachineLearning
             //PaddingToken = _tokenizer.Predict(new Token() { Residue = "PAD", Id = 0 });
         }
 
-        private List<(List<Token>, double)>? _dataset;
-        private List<(FeaturizedTokens[], double)>? _dataset2;
+        //private List<(List<Token>, double)>? _dataset;
+        private List<(FeaturizedTokens[], double)>? _dataset;
         private PredictionEngine<ResidueData, Token>? _tokenizer;
         public Token? PaddingToken;
     }

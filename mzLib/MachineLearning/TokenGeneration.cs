@@ -1,4 +1,5 @@
 ﻿using Proteomics.PSM;
+using TorchSharp;
 
 namespace MachineLearning
 {
@@ -89,6 +90,23 @@ namespace MachineLearning
             }
 
             return tokens;
+        }
+
+        public static torch.Tensor PaddingTensor(torch.Tensor tensor, int desiredTensorLength)
+        {
+            if (tensor.shape[0] != desiredTensorLength)
+            {
+                var padsToAdd = desiredTensorLength - tensor.shape[0];
+                var paddingTensor = torch.zeros(padsToAdd);
+
+                var paddedTensor =  torch.concat(new List<torch.Tensor>(){tensor, paddingTensor})
+                    .to_type(torch.ScalarType.Int32);
+
+                paddedTensor[1, -1] = paddedTensor[1, desiredTensorLength-padsToAdd];
+            }
+
+            return torch.zeros(1);
+
         }
     }
 }
