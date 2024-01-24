@@ -1,4 +1,6 @@
-﻿using Microsoft.ML;
+﻿using System.Diagnostics;
+using Microsoft.ML;
+using Tensorboard;
 using TorchSharp;
 using static MachineLearning.Tokenizer;
 
@@ -6,29 +8,78 @@ namespace MachineLearning
 {
     public class AARTNDataset : torch.utils.data.Dataset
     {
-        public override long Count => _dataset.Count;
+        public override long Count => _integerDataset.Count;
 
         public override Dictionary<string, torch.Tensor> GetTensor(long index)
         {
-            var sourceTargetPair = _dataset.ElementAt((int)index);
 
-            var encoderInput = torch.from_array(sourceTargetPair.Item1
-                .SelectMany(x => x.Features).ToArray());
+            //Get source  and target
 
-            var encoderMask = torch.tensor(sourceTargetPair.Item1
-                .SelectMany(x => x.Features).ToArray());
+            var sourceTarget = new List<int>(_integerDataset.ElementAt((int)index));
 
-            var sequence = sourceTargetPair.Item1.Select(x => x.Features);
-            var target = sourceTargetPair.Item2;
+            var maskedSourceTarget = new List<int>(_integerDataset.ElementAt((int)index));
+            //Encoder Input
+            var encoderInput = torch.from_array(sourceTarget.ToArray());
 
-            //var tensorizedSequence = torch.from_array(sequence.ToArray());
+            //get integers id for tokens to mask
+            var rangeOfTokensIntegersToMask = Enumerable.Range(6, 13);
+
+            //Encoder Mask
+            for (int i = 0; i < sourceTarget.Count; i++)
+            {
+                if (maskedSourceTarget[i] == 2)
+                {
+                    break;
+                }
+
+                if (rangeOfTokensIntegersToMask.Contains(maskedSourceTarget[i]))
+                {
+                    maskedSourceTarget[i] = 5; //masks retention time numbers
+                }
+            }
+
+            var encoderMask = torch.from_array(maskedSourceTarget.ToArray());
+
+            //DecoderInput
+            var target = new List<int>();
+
+            foreach (var item in sourceTarget)
+            {
+                if (rangeOfTokensIntegersToMask.Any(x => x.Equals(item)))
+                {
+                    target.Add(item);
+                }
+            }
+
+            while (target.Count < 32)
+            {
+                target.Add(0);
+            }
+
+            var decoderInput = torch.from_array(target.ToArray());
+
+            //Decoder Mask
+            var decoderMaskArray = sourceTarget
+                .TakeWhile(x => !x.Equals(4)).ToList();
+
+            while (decoderMaskArray.Count < 32)
+            {
+                decoderMaskArray.Add(0);
+            }
+
+            var decoderMask = torch.from_array(decoderMaskArray.ToArray());
+
+            Debug.Assert(encoderInput.shape[0] == 200);
+            Debug.Assert(decoderMask.shape[0] == 32);
+            Debug.Assert(encoderMask.shape[0] == 200);
+            Debug.Assert(decoderInput.shape[0] == 32);
 
             return new Dictionary<string, torch.Tensor>()
             {
                 {"EncoderInput", encoderInput},
-                {"DecoderInput", target.ToTensor()},
+                {"DecoderInput", decoderInput},
                 {"EncoderMask", encoderMask},
-                {"DecoderMask", target.ToTensor()}
+                {"DecoderMask", decoderMask}
             };
         }
 
@@ -59,8 +110,14 @@ namespace MachineLearning
             //PaddingToken = _tokenizer.Predict(new Token() { Residue = "PAD", Id = 0 });
         }
 
+        public AARTNDataset(List<List<int>> dataset) : base()
+        {
+            _integerDataset = dataset;
+        }
+
         //private List<(List<Token>, double)>? _dataset;
         private List<(FeaturizedTokens[], double)>? _dataset;
+        private List<List<int>>? _integerDataset;
         private PredictionEngine<ResidueData, Token>? _tokenizer;
         public Token? PaddingToken;
     }

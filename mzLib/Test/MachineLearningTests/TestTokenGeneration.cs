@@ -24,7 +24,7 @@ namespace Test.MachineLearningTests
 
             foreach (var psm in psms.Where(x => x.AmbiguityLevel == "1"))
             {
-                tokens.Add(TokenGeneration.TokenizeRetentionTimeWithFullSequence(psm, 160));
+                tokens.Add(TokenGeneration.TokenizeRetentionTimeWithFullSequence(psm));
             }
 
             var a = 0;

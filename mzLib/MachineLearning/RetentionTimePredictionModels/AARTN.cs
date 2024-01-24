@@ -8,7 +8,7 @@ namespace MachineLearning.RetentionTimePredictionModels
     public static class AARTN
     {
         public static TransformerComponents.Transformer EnsambleModel(int sourceVocabSize, int targetVocabSize,
-            int sourceSequenceLength, int targetSequenceLength, int dModel = 2708, int N = 6, int h = 2,
+            int sourceSequenceLength, int targetSequenceLength, int dModel = 512, int N = 6, int h = 8,
             double dropout=0.1, int dFF = 2048)
         {
             //Create the embedding layers

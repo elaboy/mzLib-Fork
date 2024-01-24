@@ -16,6 +16,7 @@ namespace MachineLearning.TransformerComponents
             _sourcePosition = sourcePosition;
             _targetPosition = targetPosition;
             _projectionLayer = projectionLayer;
+            SourceVocabSize = 2708; //todo: look for a better way to do this instead of a fixed value
 
             RegisterComponents();
         }
@@ -52,6 +53,7 @@ namespace MachineLearning.TransformerComponents
         private PositionalEncoder _sourcePosition;
         private PositionalEncoder _targetPosition;
         private ProjectionLayer _projectionLayer;
+        public int SourceVocabSize { get; set; }
 
     }
 }

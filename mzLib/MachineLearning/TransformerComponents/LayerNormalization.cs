@@ -9,15 +9,20 @@ public class LayerNormalization : torch.nn.Module<torch.Tensor, torch.Tensor>
     {
         _eps = eps;
         _alpha = torch.nn.Parameter(torch.ones(1)); //multiplied
-        _beta = torch.nn.Parameter(torch.zeros(1)); //addded
+        _beta = torch.nn.Parameter(torch.zeros(1)); //added
         RegisterComponents();
     }
 
     public override torch.Tensor forward(torch.Tensor input)
     {
-        var mean = input.mean(new long[]{-1}, true);
-        var std = input.std(-1, true);
+        var mean = input
+            .mean(new long[]{0}, true)
+            .reshape(new long[] { 1, input.shape[1], 512});
+        
+        var std = input.std(0, true);
+        
         var norm = (input - mean) / (std + _eps);
+        
         return _alpha * norm + _beta;
     }
 

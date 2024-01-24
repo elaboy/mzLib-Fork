@@ -1,5 +1,8 @@
-﻿using Proteomics.PSM;
+﻿using System.Data;
+using Easy.Common.Extensions;
+using Proteomics.PSM;
 using TorchSharp;
+using static TorchSharp.torch.utils.data;
 
 namespace MachineLearning
 {
@@ -10,7 +13,9 @@ namespace MachineLearning
         public const string END_OF_RETENTION_TIME_TOKEN = "</RT>";
         public const string START_OF_SEQUENCE_TOKEN = "<SOS>";
         public const string END_OF_SEQUENCE_TOKEN = "<EOS>";
-        public static List<string> TokenizeRetentionTimeWithFullSequence(PsmFromTsv psm, int tokenLength)
+        public const string MASKING_TOKEN = "<MASK>";
+
+        public static List<string> TokenizeRetentionTimeWithFullSequence(PsmFromTsv psm)
         {
             var retentionTime = psm.RetentionTime;
             var fullSequence = psm.FullSequence;
@@ -42,13 +47,13 @@ namespace MachineLearning
             }
             //tokenList.Add(fullSequence);
 
-            // Pad the rest of the tokens
-            var paddingRequired = (tokenLength - tokenList.Count) - 1;
+            //// Pad the rest of the tokens
+            //var paddingRequired = (tokenLength - tokenList.Count) - 1;
 
-            for (int i = 0; i < paddingRequired; i++)
-            {
-                tokenList.Add(PADDING_TOKEN);
-            }
+            //for (int i = 0; i < paddingRequired; i++)
+            //{
+            //    tokenList.Add(PADDING_TOKEN);
+            //}
             tokenList.Add(END_OF_SEQUENCE_TOKEN);
 
             return tokenList;
@@ -107,6 +112,47 @@ namespace MachineLearning
 
             return torch.zeros(1);
 
+        }
+
+        public static List<int> PaddingIntegerList(List<int> integerList, int paddingInteger, int desiredListLength)
+        {
+            if (integerList.Count < desiredListLength)
+            {
+                integerList.RemoveAt(integerList.Count-1); //remove end of sequence token
+                
+                var padsToAdd = (desiredListLength - integerList.Count) - 1; //the -1 is to leave space for the end of sequence token
+                
+                for (int i = 0; i < padsToAdd; i++)
+                {
+                    integerList.Add(paddingInteger);
+                }
+
+                integerList.Add(3); //end of sequence token id
+            }
+
+            return integerList;
+        }
+
+        public static (List<List<int>>, List<List<int>>, List<List<int>>)
+            TrainValidateTestSplit(List<List<int>> listOfTokenId, double trainingFraction = 0.8,
+                double testingFraction = 0.1, double validationFraction = 0.1)
+        {
+            var randomizedData = listOfTokenId.Randomize().ToList();
+
+            var trainingSet = randomizedData
+                .Take((int)(randomizedData.Count * (1 - validationFraction)))
+                .ToList();
+
+            var validationSet = randomizedData
+                .Skip((int)(randomizedData.Count * (1 - validationFraction)))
+                .Take((int)(randomizedData.Count * (1 - testingFraction)))
+                .ToList();
+
+            var testSet = randomizedData
+                .Skip((int)(randomizedData.Count * (1 - validationFraction)))
+                .ToList();
+
+            return (trainingSet, validationSet, testSet);
         }
     }
 }

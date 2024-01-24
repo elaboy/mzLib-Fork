@@ -96,6 +96,109 @@ namespace MachineLearning
             }
         }
 
+        public static void TrainTransformer(TransformerComponents.Transformer transformerModel, DataLoader trainingDataLoader, 
+            DataLoader validationDataLoader, DataLoader testingDataLoader)
+        {
+            //Define Device 
+            var device = torch.cuda.is_available()
+                ? //if true, use GPU, else CPU
+                torch.device(DeviceType.CUDA)
+                : torch.device(DeviceType.CPU);
+
+            transformerModel.to(device);
+
+            //Parameters
+            var options = Configuration();
+
+            //Define Optimizer
+            var optimizer = torch.optim.Adam(transformerModel.parameters(), options["learningRate"]);
+
+            var intialEpoch = 0;
+            var globalStep = 0;
+            var lossFunction = torch.nn.CrossEntropyLoss(
+                ignore_index: 0).to(device);
+
+            var writer = torch.utils.tensorboard.SummaryWriter(@"D:AI_Datasets/runs/FirstTransformerLog", createRunName: true);
+
+            for (int currentEpoch = 0; currentEpoch < (int)options["epochs"]; currentEpoch++)
+            {
+                transformerModel.train();
+                var lossTracker = new List<float>();
+                foreach (var batch in trainingDataLoader)
+                {
+                    var encoderInput = batch["EncoderInput"].to(device);
+                    var decoderInput = batch["DecoderInput"].to(device);
+                    var encoderMask = batch["EncoderMask"].to(device);
+                    var decoderMask = batch["DecoderMask"].to(device);
+
+                    //Run tensors through the transformer
+                    var encoderOutput = transformerModel.Encode(encoderInput, encoderMask).to(device);
+                    var decoderOutput = transformerModel.Decode(encoderOutput, encoderMask,
+                        decoderInput, decoderMask).to(device);
+                    var projectionOutput = transformerModel.Project(decoderOutput).to(device);
+
+                    var label = batch["DecoderInput"].to(device);
+
+                    var longTensorProjectionOutput = torch.FloatTensor(
+                        projectionOutput.view(-1, transformerModel.SourceVocabSize));
+
+                    var longTensorLabel = torch.LongTensor(label.view(-1));
+
+                    var loss = lossFunction.forward(
+                        longTensorProjectionOutput,
+                        longTensorLabel);
+
+                    optimizer.zero_grad();
+                    loss.backward();
+                    optimizer.step();
+
+                    lossTracker.Add(loss.item<float>());
+
+                    var l = loss.item<float>();
+
+                    writer.add_scalar("csharp/training_loss", l, currentEpoch);
+                }
+                Debug.WriteLine("Epoch: " + currentEpoch + " Loss: " + lossTracker.Last());
+
+                Debug.WriteLine("Testing Section: ");
+
+                transformerModel.eval();
+                foreach (var batch in testingDataLoader)
+                {
+                    var encoderInput = batch["EncoderInput"].to(device);
+                    var decoderInput = batch["DecoderInput"].to(device);
+                    var encoderMask = batch["EncoderMask"].to(device);
+                    var decoderMask = batch["DecoderMask"].to(device);
+
+                    //Run tensors through the transformer
+                    var encoderOutput = transformerModel.Encode(encoderInput, encoderMask).to(device);
+                    var decoderOutput = transformerModel.Decode(encoderOutput, encoderMask,
+                                               decoderInput, decoderMask).to(device);
+                    var projectionOutput = transformerModel.Project(decoderOutput).to(device);
+
+                    var label = batch["DecoderInput"].to(device);
+
+                    var longTensorProjectionOutput = torch.FloatTensor(
+                                               projectionOutput.view(-1, transformerModel.SourceVocabSize));
+
+                    var longTensorLabel = torch.LongTensor(label.view(-1));
+
+                    var loss = lossFunction.forward(
+                                               longTensorProjectionOutput,
+                                                                      longTensorLabel);
+
+                    Debug.WriteLine("Predicted: " + longTensorProjectionOutput.ToString(TensorStringStyle.Julia));
+                    Debug.WriteLine("Label: " + longTensorLabel.ToString(TensorStringStyle.Julia));
+                    Debug.WriteLine("Loss: " + loss.item<float>());
+                    Debug.WriteLine("-----------------------------");
+                    var l = loss.item<float>();
+
+                    writer.add_scalar("csharp/testing_loss", l, currentEpoch);
+                }
+                Debug.WriteLine("*****************************************************");
+            }
+        }
+
         public static Dictionary<string, double> Configuration()
         {
             return new Dictionary<string, double>()
@@ -103,7 +206,7 @@ namespace MachineLearning
             {"epochs", 10},
             {"learningRate", 0.0001},
             {"sequenceLength", 150},
-            {"dModel", 2708}};
+            {"dModel", 512}};
         }
     }
 

@@ -16,10 +16,10 @@ public class MultiHeadAttentionBlock : torch.nn.Module<torch.Tensor, torch.Tenso
 
         _dK = dModel / numHeads;
 
-        _linearQ = torch.nn.Linear(dModel, dModel); //Wq
-        _linearK = torch.nn.Linear(dModel, dModel); //Wk
-        _linearV = torch.nn.Linear(dModel, dModel); //Wv
-        _linearO = torch.nn.Linear(dModel, dModel); //Wo
+        _linearQ = torch.nn.Linear(dModel, dModel, false); //Wq
+        _linearK = torch.nn.Linear(dModel, dModel, false); //Wk
+        _linearV = torch.nn.Linear(dModel, dModel, false); //Wv
+        _linearO = torch.nn.Linear(dModel, dModel, false); //Wo
 
         _mask = mask;
 
@@ -37,7 +37,7 @@ public class MultiHeadAttentionBlock : torch.nn.Module<torch.Tensor, torch.Tenso
         var (x, attention) = Attention(q, k, v, _mask, _dropout);
 
         //(BatchSize, numHeads, SequenceLength, dK) to (BatchSize, SequenceLength, numHeads, dK) to (BatchSize, SequenceLength, dModel)
-        x = x.transpose(1, 2).contiguous().view(x.shape[0], -1, _numHeads, _dK);
+        x = x.transpose(1, 2).contiguous().view(x.shape[0], x.shape[2], _numHeads * _dK);
 
         //(Batch, SequenceLength, dModel) to (Batch, SequenceLength, dModel)
         return _linearO.forward(x);
@@ -45,7 +45,7 @@ public class MultiHeadAttentionBlock : torch.nn.Module<torch.Tensor, torch.Tenso
 
     private static (torch.Tensor, torch.Tensor) Attention(torch.Tensor q, torch.Tensor k, torch.Tensor v, torch.Tensor? mask, Dropout dropout = null)
     {
-        var dK = q.shape[-1];
+        var dK = q.shape[3];
         //(BatchSize, numHeads, SequenceLength, dK) to (BatchSize, numHeads, SequenceLength, SequenceLength)
         var scores = torch.matmul(q, k.transpose(-2, -1)) / Math.Sqrt(dK);
 
