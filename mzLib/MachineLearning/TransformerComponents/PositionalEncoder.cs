@@ -1,6 +1,7 @@
 ﻿using MathNet.Numerics;
 using TorchSharp;
 using TorchSharp.Modules;
+using static TorchSharp.torch;
 
 namespace MachineLearning.TransformerComponents;
 
@@ -24,7 +25,7 @@ public class PositionalEncoder : torch.nn.Module<torch.Tensor, torch.Tensor>
             torch.cos(position * divTerm);
 
         _positionalEncoding = positionalEncoding.unsqueeze(0); //becomes (1, sequenceLenth, dModel)
-        register_buffer("positionalEncoding", _positionalEncoding);
+        //register_buffer("positionalEncoding", _positionalEncoding);
     }
 
     public override torch.Tensor forward(torch.Tensor input)
