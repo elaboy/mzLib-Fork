@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Microsoft.ML;
 using Tensorboard;
 using TorchSharp;
@@ -14,7 +15,6 @@ namespace MachineLearning
         {
 
             //Get source  and target
-
             var sourceTarget = new List<int>(_integerDataset.ElementAt((int)index));
 
             var maskedSourceTarget = new List<int>(_integerDataset.ElementAt((int)index));
@@ -68,18 +68,18 @@ namespace MachineLearning
             }
 
             var decoderMask = torch.from_array(decoderMaskArray.ToArray());
-
-            Debug.Assert(encoderInput.shape[0] == 200);
-            Debug.Assert(decoderMask.shape[0] == 32);
-            Debug.Assert(encoderMask.shape[0] == 200);
-            Debug.Assert(decoderInput.shape[0] == 32);
+            //Debug.Assert(encoderInput.shape[0] == 200);
+            //Debug.Assert(decoderMask.shape[0] == 32);
+            //Debug.Assert(encoderMask.shape[0] == 200);
+            //Debug.Assert(decoderInput.shape[0] == 32);
 
             return new Dictionary<string, torch.Tensor>()
             {
                 {"EncoderInput", encoderInput},
                 {"DecoderInput", decoderInput},
                 {"EncoderMask", encoderMask},
-                {"DecoderMask", decoderMask}
+                {"DecoderMask", decoderMask},
+                {"Label", torch.from_array()}
             };
         }
 

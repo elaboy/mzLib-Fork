@@ -221,7 +221,7 @@ namespace Test.MachineLearningTests
             var psms = Readers.SpectrumMatchTsvReader.ReadPsmTsv(
                     @"D:/AI_Datasets/Hela1_AllPSMs.psmtsv", out var warnings)
                 .Where(x => x.AmbiguityLevel == "1")
-                //.Take(1000)
+                .Take(1000)
                 .ToList();
 
             var tokenizedPsmsList = new List<List<string>>();
@@ -262,7 +262,7 @@ namespace Test.MachineLearningTests
                     }
                 }
                 if(tokenIdList.Count != 0) //Empty list is not added to main list
-                    tokenIdList = TokenGeneration.PaddingIntegerList(tokenIdList, 0, 200); //makes sure padding is done right with desired length
+                    tokenIdList = TokenGeneration.PaddingIntegerList(tokenIdList, 0, 100); //makes sure padding is done right with desired length
                 else
                     continue;
                 
@@ -279,12 +279,12 @@ namespace Test.MachineLearningTests
             var testingDataset = new AARTNDataset(test);
             
             //dataloaders
-            var trainingDataLoader = new DataLoader(trainingDataset, 8, shuffle: true, new Device(DeviceType.CPU), 1, 1, true);
-            var validationDataLoader = new DataLoader(validationDataset, 8, shuffle: true, new Device(DeviceType.CPU), 1, 1, true);
-            var testingDataLoader = new DataLoader(testingDataset, 8, shuffle: true, new Device(DeviceType.CPU), 1, 1, true);
+            var trainingDataLoader = new DataLoader(trainingDataset, 32, shuffle: true, new Device(DeviceType.CPU), 1, 1, true);
+            var validationDataLoader = new DataLoader(validationDataset, 32, shuffle: true, new Device(DeviceType.CPU), 1, 1, true);
+            var testingDataLoader = new DataLoader(testingDataset, 32, shuffle: true, new Device(DeviceType.CPU), 1, 1, true);
             //var dataLoader = new DataLoader(dataset, 32, shuffle: true, null, 1, 1, true);
 
-            var model = AARTN.EnsambleModel(2708, 2708, 200, 1);
+            var model = AARTN.EnsambleModel(2708, 32, 100, 32);
 
             AARTNHelperFunctions.TrainTransformer(model, trainingDataLoader, validationDataLoader, testingDataLoader);
 

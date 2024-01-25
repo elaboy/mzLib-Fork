@@ -16,7 +16,7 @@ public class ProjectionLayer : torch.nn.Module<torch.Tensor, torch.Tensor>
     {
         //(Batch, SequenceLength, dModel) to (Batch, SequenceLength, vocabSize)
 
-        return torch.nn.functional.log_softmax(_projectionLayer.forward(input), -1);
+        return torch.nn.functional.log_softmax(_projectionLayer.forward(input), 2);
     }
 
     private Linear _projectionLayer;

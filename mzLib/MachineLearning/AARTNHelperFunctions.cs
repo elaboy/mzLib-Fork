@@ -143,9 +143,10 @@ namespace MachineLearning
                     var label = batch["DecoderInput"].to(device);
 
                     var longTensorProjectionOutput = torch.FloatTensor(
-                        projectionOutput.view(-1, transformerModel.SourceVocabSize)).to(device);
+                        projectionOutput.view(projectionOutput.shape[0],
+                            projectionOutput.shape[2] * projectionOutput.shape[2]).to(device));
 
-                    var longTensorLabel = torch.LongTensor(label.view(-1)).to(device);
+                    var longTensorLabel = torch.LongTensor(label).to(device);
 
                     var loss = lossFunction.forward(
                         longTensorProjectionOutput,
