@@ -25,7 +25,7 @@ namespace MachineLearning.RetentionTimePredictionModels
             {
                 var decoderSelfAttentionBlock = new MultiHeadAttentionBlock(dModel, h, dropout);
                 var feedForwardBlock = new FeedForwardBlock(dModel, dFF, dropout);
-                var encoderBlock = new EncoderBlock(decoderSelfAttentionBlock, feedForwardBlock, dropout);
+                var encoderBlock = new EncoderBlock(dModel, decoderSelfAttentionBlock, feedForwardBlock, dropout);
                 encoderBlocks.Add(encoderBlock);
             }
 
@@ -36,7 +36,7 @@ namespace MachineLearning.RetentionTimePredictionModels
                 var decoderSelfAttentionBlock = new MultiHeadAttentionBlock(dModel, h, dropout);
                 var encoderDecoderAttentionBlock = new MultiHeadAttentionBlock(dModel, h, dropout);
                 var feedForwardBlock = new FeedForwardBlock(dModel, dFF, dropout);
-                var decoderBlock = new DecoderBlock(decoderSelfAttentionBlock, encoderDecoderAttentionBlock,
+                var decoderBlock = new DecoderBlock(dModel, decoderSelfAttentionBlock, encoderDecoderAttentionBlock,
                                        feedForwardBlock, dropout);
                 decoderBlocks.Add(decoderBlock);
             }

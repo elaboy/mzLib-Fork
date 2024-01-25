@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Easy.Common.Extensions;
 using Microsoft.ML;
 using Tensorboard;
 using TorchSharp;
@@ -22,21 +23,11 @@ namespace MachineLearning
             var encoderInput = torch.from_array(sourceTarget.ToArray());
 
             //get integers id for tokens to mask
-            var rangeOfTokensIntegersToMask = Enumerable.Range(6, 13);
+            var rangeOfTokensIntegersToMask = Enumerable.Range(6, 18);
 
             //Encoder Mask
-            for (int i = 0; i < sourceTarget.Count; i++)
-            {
-                if (maskedSourceTarget[i] == 2)
-                {
-                    break;
-                }
-
-                if (rangeOfTokensIntegersToMask.Contains(maskedSourceTarget[i]))
-                {
-                    maskedSourceTarget[i] = 5; //masks retention time numbers
-                }
-            }
+            var encoderMaskWithoutRT = maskedSourceTarget.Skip(3).ToList();
+            encoderMaskWithoutRT.InsertRange(0, new List<int>(3){{5}});
 
             var encoderMask = torch.from_array(maskedSourceTarget.ToArray());
 
@@ -51,21 +42,23 @@ namespace MachineLearning
                 }
             }
 
-            while (target.Count < 32)
+            while (target.Count < 5)
             {
-                target.Add(0);
+                target.Add(6);
             }
 
             var decoderInput = torch.from_array(target.ToArray());
 
             //Decoder Mask
             var decoderMaskArray = sourceTarget
-                .TakeWhile(x => !x.Equals(4)).ToList();
+                .TakeWhile(x => !x.Equals(4))
+                .Take(new Range(1,6))
+                .ToList();
 
-            while (decoderMaskArray.Count < 32)
-            {
-                decoderMaskArray.Add(0);
-            }
+            //while (decoderMaskArray.Count < 32)
+            //{
+            //    decoderMaskArray.Add(0);
+            //}
 
             var decoderMask = torch.from_array(decoderMaskArray.ToArray());
             //Debug.Assert(encoderInput.shape[0] == 200);
@@ -73,13 +66,27 @@ namespace MachineLearning
             //Debug.Assert(encoderMask.shape[0] == 200);
             //Debug.Assert(decoderInput.shape[0] == 32);
 
+            //label
+            var rawLabel = sourceTarget
+                .Skip(1)
+                .TakeWhile(x => !x.Equals(2))
+                .ToArray();
+
+            var label = torch.from_array(rawLabel);
+
+            Debug.WriteLine(encoderInput.ToString(TensorStringStyle.Julia));
+            Debug.WriteLine(decoderInput.ToString(TensorStringStyle.Julia));
+            Debug.WriteLine(encoderMask.ToString(TensorStringStyle.Julia));
+            Debug.WriteLine(decoderMask.ToString(TensorStringStyle.Julia));
+            Debug.WriteLine(label.ToString(TensorStringStyle.Julia));
+
             return new Dictionary<string, torch.Tensor>()
             {
                 {"EncoderInput", encoderInput},
                 {"DecoderInput", decoderInput},
                 {"EncoderMask", encoderMask},
                 {"DecoderMask", decoderMask},
-                {"Label", torch.from_array()}
+                {"Label", label}
             };
         }
 

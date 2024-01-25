@@ -6,14 +6,15 @@ namespace MachineLearning.TransformerComponents;
 
 public class EncoderBlock : torch.nn.Module<torch.Tensor, torch.Tensor, torch.Tensor>
 {
-    public EncoderBlock(MultiHeadAttentionBlock selfAttentionBlock, FeedForwardBlock feedForwardBlock, double dropout) 
+    public EncoderBlock(int features, MultiHeadAttentionBlock selfAttentionBlock, FeedForwardBlock feedForwardBlock, double dropout) 
         : base(nameof(EncoderBlock))
     {
+        _features = features;
         _selfAttentionBlock = selfAttentionBlock;
         _feedForwardBlock = feedForwardBlock;
         _residualConnection = new ModuleList<ResidualConnection>(new ResidualConnection[]
-        { new ResidualConnection(torch.nn.Dropout(dropout)),
-            new ResidualConnection(torch.nn.Dropout(dropout))
+        { new ResidualConnection(features, torch.nn.Dropout(dropout)),
+            new ResidualConnection(features, torch.nn.Dropout(dropout))
         });
 
         RegisterComponents();
@@ -31,4 +32,5 @@ public class EncoderBlock : torch.nn.Module<torch.Tensor, torch.Tensor, torch.Te
     private MultiHeadAttentionBlock _selfAttentionBlock;
     private FeedForwardBlock _feedForwardBlock;
     private ModuleList<ResidualConnection> _residualConnection;
+    private int _features;
 }

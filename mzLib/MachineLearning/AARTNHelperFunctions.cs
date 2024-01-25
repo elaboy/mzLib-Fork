@@ -118,7 +118,8 @@ namespace MachineLearning
             var lossFunction = torch.nn.CrossEntropyLoss(
                 ignore_index: 0).to(device);
 
-            var writer = torch.utils.tensorboard.SummaryWriter(@"D:AI_Datasets/runs/FirstTransformerLog", createRunName: true);
+            var writer = torch.utils.tensorboard.SummaryWriter(@"D:AI_Datasets/runs/FirstTransformerLog", 
+                createRunName: true);
 
             int trainingSteps = 0;
             var testingSteps = 0;
@@ -140,16 +141,23 @@ namespace MachineLearning
                         decoderInput, decoderMask).to(device);
                     var projectionOutput = transformerModel.Project(decoderOutput).to(device);
 
-                    var label = batch["DecoderInput"].to(device);
+                    var label = batch["Label"].to(device);
+
+                    Debug.WriteLine(projectionOutput.ToString(TensorStringStyle.Julia));
+
+                    Debug.WriteLine(label.ToString(TensorStringStyle.Julia));
 
                     var longTensorProjectionOutput = torch.FloatTensor(
-                        projectionOutput.view(projectionOutput.shape[0],
-                            projectionOutput.shape[2] * projectionOutput.shape[2]).to(device));
+                        projectionOutput).to(device);
 
                     var longTensorLabel = torch.LongTensor(label).to(device);
 
+                    Debug.WriteLine(longTensorProjectionOutput.ToString(TensorStringStyle.Julia));   
+                    Debug.WriteLine(longTensorLabel.view(longTensorLabel.shape[0], 
+                        longTensorLabel.shape[1]).ToString(TensorStringStyle.Julia));
+
                     var loss = lossFunction.forward(
-                        longTensorProjectionOutput,
+                        longTensorProjectionOutput.view(32, 5*25),
                         longTensorLabel).to(device);
 
                     optimizer.zero_grad();

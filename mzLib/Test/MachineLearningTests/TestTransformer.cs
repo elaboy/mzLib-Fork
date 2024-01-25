@@ -212,7 +212,7 @@ namespace Test.MachineLearningTests
         public void TestDatasetCreationForAARTNDatasetClass()
         {
             List<Tokens> tokens = new List<Tokens>();
-            using (var reader = new StreamReader(@"D:\AI_Datasets\VocabularyForTransformerUnimod_V2.csv"))
+            using (var reader = new StreamReader(@"D:\AI_Datasets\VocabularyForTransformerUnimod_V3.csv"))
             using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
             {
                 tokens.AddRange(csv.GetRecords<Tokens>().ToList());
@@ -284,7 +284,7 @@ namespace Test.MachineLearningTests
             var testingDataLoader = new DataLoader(testingDataset, 32, shuffle: true, new Device(DeviceType.CPU), 1, 1, true);
             //var dataLoader = new DataLoader(dataset, 32, shuffle: true, null, 1, 1, true);
 
-            var model = AARTN.EnsambleModel(2708, 32, 100, 32);
+            var model = AARTN.EnsambleModel(2729, 25, 100, 5);
 
             AARTNHelperFunctions.TrainTransformer(model, trainingDataLoader, validationDataLoader, testingDataLoader);
 

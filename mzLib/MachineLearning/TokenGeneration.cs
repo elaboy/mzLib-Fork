@@ -1,5 +1,8 @@
 ﻿using System.Data;
+using CsvHelper;
+using System.Globalization;
 using Easy.Common.Extensions;
+using MathNet.Numerics;
 using Proteomics.PSM;
 using TorchSharp;
 using static TorchSharp.torch.utils.data;
@@ -22,11 +25,10 @@ namespace MachineLearning
 
             List<string> tokenList = new();
             tokenList.Add(RETENTION_TIME_START_TOKEN);
-            foreach (var token in NumericalTokenizer(retentionTime.Value))
-            {
-                tokenList.Add(token);
-            }
 
+            retentionTime = Math.Round(retentionTime.Value, 2, MidpointRounding.AwayFromZero);
+
+            tokenList.AddRange(RetentionTimeTokenizer(retentionTime.Value));
             tokenList.Add(END_OF_RETENTION_TIME_TOKEN);
             tokenList.Add(START_OF_SEQUENCE_TOKEN);
             var fullSequenceSplit = fullSequence.Split('[', ']');
@@ -95,6 +97,79 @@ namespace MachineLearning
             }
 
             return tokens;
+        }
+
+        public static string[] RetentionTimeTokenizer(double retentionTime)
+        {
+            var tokens = new string[5];
+            var retentionTimeAsString = retentionTime.ToString().Split('.');
+            var integers = retentionTimeAsString[0];
+            var decimals = retentionTimeAsString.Count() == 2 ? retentionTimeAsString[1] : "00"; //if there is no decimal part, add 00
+            if (integers.Length < 3)
+            {
+                tokens[0] = 0.ToString();
+                tokens[1] = integers[0].ToString();
+                tokens[2] = integers[1].ToString();
+            }
+            else
+            {
+                tokens[0] = integers[0].ToString();
+                tokens[1] = integers[1].ToString();
+                tokens[2] = integers[2].ToString();
+            }
+
+            if (decimals.Length < 2)
+            {
+                tokens[3] = '-'+decimals[0].ToString();
+                tokens[4] = 0.ToString();
+            }
+            else
+            {
+                tokens[3] = '-'+decimals[0].ToString();
+                tokens[4] = '-'+decimals[1].ToString();
+            }
+
+            return tokens;
+        }
+
+        public static int[] RetentionTimeTokenDecoder(string[] retentionTimeTokens, string pathToVocab)
+        {
+            List<Tokens> tokens = new List<Tokens>();
+            using (var reader = new StreamReader(Path.Combine(pathToVocab)))
+            using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+            {
+                tokens.AddRange(csv.GetRecords<Tokens>().ToList());
+            }
+
+            var decodedTokens = new List<int>();
+
+            foreach (var token in retentionTimeTokens)
+            {
+                decodedTokens.Add(tokens.Where(x => x.Token == token).First().Id);
+                
+            }
+
+
+            
+
+            //For decoding back to double 
+            //foreach (var token in cleanToken)
+            //{
+            //    if (token.Contains('.'))
+            //    {
+            //        decodedTokens.Add(".");
+            //        var withoutDot = token.Split(".")[1];
+            //        decodedTokens.Add(tokens.Where(x => x.Id == int.Parse(withoutDot)).First().Token);
+            //        continue;
+            //    }
+
+            //    decodedTokens.Add(tokens.Where(x => x.Id == int.Parse(token)).First().Token);
+            //}
+
+            //var noNegativeNumbers = decodedTokens
+            //    .Select(x => x.Contains('-') ? x.Split("-")[1] : x);
+
+            return decodedTokens.ToArray();
         }
 
         public static torch.Tensor PaddingTensor(torch.Tensor tensor, int desiredTensorLength)

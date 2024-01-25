@@ -6,10 +6,10 @@ namespace MachineLearning.TransformerComponents;
 
 public class ResidualConnection : torch.nn.Module<torch.Tensor, Func<torch.Tensor, torch.Tensor>, torch.Tensor>
 {
-    public ResidualConnection(Dropout dropout) : base(nameof(ResidualConnection))
+    public ResidualConnection(int features, Dropout dropout) : base(nameof(ResidualConnection))
     {
         _dropout = dropout;
-
+        _norm = new LayerNormalization(features);
         RegisterComponents();
     }
 

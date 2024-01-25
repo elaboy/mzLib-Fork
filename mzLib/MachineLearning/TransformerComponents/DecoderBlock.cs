@@ -6,7 +6,7 @@ namespace MachineLearning.TransformerComponents;
 
 public class DecoderBlock : torch.nn.Module<torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor>
 {
-    public DecoderBlock(MultiHeadAttentionBlock selfAttentionBlock, MultiHeadAttentionBlock crossAttentionBlock,
+    public DecoderBlock(int features, MultiHeadAttentionBlock selfAttentionBlock, MultiHeadAttentionBlock crossAttentionBlock,
         FeedForwardBlock feedForwardBlock, double dropout) : base(nameof(DecoderBlock))
     {
         _selfAttentionBlock = selfAttentionBlock;
@@ -14,9 +14,9 @@ public class DecoderBlock : torch.nn.Module<torch.Tensor, torch.Tensor, torch.Te
         _feedForwardBlock = feedForwardBlock;
         _residualConnection = new ModuleList<ResidualConnection>(new ResidualConnection[]
         {
-            new ResidualConnection(torch.nn.Dropout(dropout)),
-            new ResidualConnection(torch.nn.Dropout(dropout)),
-            new ResidualConnection(torch.nn.Dropout(dropout))
+            new ResidualConnection(features, torch.nn.Dropout(dropout)),
+            new ResidualConnection(features, torch.nn.Dropout(dropout)),
+            new ResidualConnection(features, torch.nn.Dropout(dropout))
         });
 
         RegisterComponents();
