@@ -8,7 +8,7 @@ public class InputEmbeddings : torch.nn.Module<torch.Tensor, torch.Tensor>
 {
     public InputEmbeddings(int dModel, int vocabSize) : base(nameof(InputEmbeddings))
     {
-        _embedding = torch.nn.Embedding(vocabSize, dModel);
+        _embedding = torch.nn.Embedding(vocabSize, dModel, padding_idx: 0);
         _dModel = dModel;
         _vocabSize = vocabSize;
 

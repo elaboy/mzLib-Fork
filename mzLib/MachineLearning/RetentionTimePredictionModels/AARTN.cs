@@ -36,7 +36,8 @@ namespace MachineLearning.RetentionTimePredictionModels
                 var decoderSelfAttentionBlock = new MultiHeadAttentionBlock(dModel, h, dropout);
                 var encoderDecoderAttentionBlock = new MultiHeadAttentionBlock(dModel, h, dropout);
                 var feedForwardBlock = new FeedForwardBlock(dModel, dFF, dropout);
-                var decoderBlock = new DecoderBlock(dModel, decoderSelfAttentionBlock, encoderDecoderAttentionBlock,
+                var decoderBlock = new DecoderBlock(dModel, decoderSelfAttentionBlock, 
+                    encoderDecoderAttentionBlock,
                                        feedForwardBlock, dropout);
                 decoderBlocks.Add(decoderBlock);
             }
@@ -51,7 +52,8 @@ namespace MachineLearning.RetentionTimePredictionModels
             var projectionLayer = new ProjectionLayer(dModel, targetVocabSize);
 
             //Create the transformer
-            var transformer = new TransformerComponents.Transformer(encoder, decoder, sourceEmbedding, targetEmbedding, sourcePosition,
+            var transformer = new TransformerComponents.Transformer(encoder, decoder, 
+                sourceEmbedding, targetEmbedding, sourcePosition,
                                targetPosition, projectionLayer);
 
             return transformer;

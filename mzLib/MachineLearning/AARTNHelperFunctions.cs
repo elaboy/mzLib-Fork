@@ -134,6 +134,7 @@ namespace MachineLearning
                     var decoderInput = batch["DecoderInput"].to(device);
                     var encoderMask = batch["EncoderMask"].to(device);
                     var decoderMask = batch["DecoderMask"].to(device);
+                    var label = batch["Label"].to(device);
 
                     //Run tensors through the transformer
                     var encoderOutput = transformerModel.Encode(encoderInput, encoderMask).to(device);
@@ -141,7 +142,6 @@ namespace MachineLearning
                         decoderInput, decoderMask).to(device);
                     var projectionOutput = transformerModel.Project(decoderOutput).to(device);
 
-                    var label = batch["Label"].to(device);
 
                     Debug.WriteLine(projectionOutput.ToString(TensorStringStyle.Julia));
 
@@ -153,12 +153,11 @@ namespace MachineLearning
                     var longTensorLabel = torch.LongTensor(label).to(device);
 
                     Debug.WriteLine(longTensorProjectionOutput.ToString(TensorStringStyle.Julia));   
-                    Debug.WriteLine(longTensorLabel.view(longTensorLabel.shape[0], 
-                        longTensorLabel.shape[1]).ToString(TensorStringStyle.Julia));
+                    Debug.WriteLine(longTensorLabel.ToString(TensorStringStyle.Julia));
 
                     var loss = lossFunction.forward(
-                        longTensorProjectionOutput.view(32, 5*25),
-                        longTensorLabel).to(device);
+                        longTensorProjectionOutput,
+                        longTensorLabel.@long()).to(device);
 
                     optimizer.zero_grad();
                     loss.backward();

@@ -86,7 +86,7 @@ namespace MachineLearning
                 {"DecoderInput", decoderInput},
                 {"EncoderMask", encoderMask},
                 {"DecoderMask", decoderMask},
-                {"Label", label}
+                {"Label", torch.from_array(_integerDataset.ElementAt((int)index).ToArray())}
             };
         }
 

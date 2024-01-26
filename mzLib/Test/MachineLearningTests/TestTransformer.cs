@@ -284,7 +284,7 @@ namespace Test.MachineLearningTests
             var testingDataLoader = new DataLoader(testingDataset, 32, shuffle: true, new Device(DeviceType.CPU), 1, 1, true);
             //var dataLoader = new DataLoader(dataset, 32, shuffle: true, null, 1, 1, true);
 
-            var model = AARTN.EnsambleModel(2729, 25, 100, 5);
+            var model = AARTN.EnsambleModel(2729, 25, 100, 100);
 
             AARTNHelperFunctions.TrainTransformer(model, trainingDataLoader, validationDataLoader, testingDataLoader);
 
