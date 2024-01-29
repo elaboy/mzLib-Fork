@@ -45,7 +45,7 @@ public class MultiHeadAttentionBlock : torch.nn.Module<torch.Tensor, torch.Tenso
 
     private static (torch.Tensor, torch.Tensor) Attention(torch.Tensor q, torch.Tensor k, torch.Tensor v, torch.Tensor? mask, Dropout dropout = null)
     {
-        var dK = q.shape[3];
+        var dK = q.shape[2];
         //(BatchSize, numHeads, SequenceLength, dK) to (BatchSize, numHeads, SequenceLength, SequenceLength)
         var scores = torch.matmul(q, k.transpose(-2, -1)) / Math.Sqrt(dK);
 

@@ -24,8 +24,8 @@ public class PositionalEncoder : torch.nn.Module<torch.Tensor, torch.Tensor>
         positionalEncoding[torch.TensorIndex.Colon, torch.TensorIndex.Slice(1,null, 2)] = 
             torch.cos(position * divTerm);
 
-        _positionalEncoding = positionalEncoding.unsqueeze(0); //becomes (1, sequenceLenth, dModel)
-        register_buffer("positionalEncoding", _positionalEncoding);
+        _positionalEncoding = positionalEncoding.unsqueeze(0).to(DeviceType.CUDA); //becomes (1, sequenceLenth, dModel)
+        //register_buffer("positionalEncoding", _positionalEncoding);
     }
 
     public override torch.Tensor forward(torch.Tensor input)

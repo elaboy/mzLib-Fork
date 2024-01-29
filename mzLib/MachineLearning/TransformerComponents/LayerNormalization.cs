@@ -15,9 +15,7 @@ public class LayerNormalization : torch.nn.Module<torch.Tensor, torch.Tensor>
 
     public override torch.Tensor forward(torch.Tensor input)
     {
-        var mean = input
-            .mean(new long[]{0}, true)
-            .reshape(new long[] { 1, input.shape[1], 512});
+        var mean = input.mean(new long[]{0}, true);
         
         var std = input.std(0, true);
         

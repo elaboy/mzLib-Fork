@@ -105,11 +105,17 @@ namespace MachineLearning
             var retentionTimeAsString = retentionTime.ToString().Split('.');
             var integers = retentionTimeAsString[0];
             var decimals = retentionTimeAsString.Count() == 2 ? retentionTimeAsString[1] : "00"; //if there is no decimal part, add 00
-            if (integers.Length < 3)
+            if (integers.Length == 2)
             {
                 tokens[0] = 0.ToString();
                 tokens[1] = integers[0].ToString();
                 tokens[2] = integers[1].ToString();
+            }
+            else if (integers.Length == 1)
+            {
+                tokens[0] = 0.ToString();
+                tokens[1] = 0.ToString();
+                tokens[2] = integers[0].ToString();
             }
             else
             {
@@ -118,7 +124,7 @@ namespace MachineLearning
                 tokens[2] = integers[2].ToString();
             }
 
-            if (decimals.Length < 2)
+            if (decimals.Length == 1)
             {
                 tokens[3] = '-'+decimals[0].ToString();
                 tokens[4] = 0.ToString();

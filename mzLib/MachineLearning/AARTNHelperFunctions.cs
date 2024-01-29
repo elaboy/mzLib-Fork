@@ -132,8 +132,8 @@ namespace MachineLearning
                 {
                     var encoderInput = batch["EncoderInput"].to(device);
                     var decoderInput = batch["DecoderInput"].to(device);
-                    var encoderMask = batch["EncoderMask"].to(device);
-                    var decoderMask = batch["DecoderMask"].to(device);
+                    var encoderMask = batch["EncoderInputMask"].to(device);
+                    var decoderMask = batch["DecoderInputMask"].to(device);
                     var label = batch["Label"].to(device);
 
                     //Run tensors through the transformer
@@ -143,21 +143,26 @@ namespace MachineLearning
                     var projectionOutput = transformerModel.Project(decoderOutput).to(device);
 
 
-                    Debug.WriteLine(projectionOutput.ToString(TensorStringStyle.Julia));
+                    //Debug.WriteLine(projectionOutput.ToString(TensorStringStyle.Julia));
 
-                    Debug.WriteLine(label.ToString(TensorStringStyle.Julia));
+                    //Debug.WriteLine(label.ToString(TensorStringStyle.Julia));
 
                     var longTensorProjectionOutput = torch.FloatTensor(
                         projectionOutput).to(device);
 
                     var longTensorLabel = torch.LongTensor(label).to(device);
 
-                    Debug.WriteLine(longTensorProjectionOutput.ToString(TensorStringStyle.Julia));   
-                    Debug.WriteLine(longTensorLabel.ToString(TensorStringStyle.Julia));
+                    //Debug.WriteLine(longTensorProjectionOutput.ToString(TensorStringStyle.Julia));   
+                    //Debug.WriteLine(longTensorLabel.ToString(TensorStringStyle.Julia));
+
+                    var predictedTensor =
+                        longTensorProjectionOutput[torch.TensorIndex.Colon, torch.TensorIndex.Colon, torch.TensorIndex.Slice(1, 6)];
+
+                    var labelTensor = longTensorLabel[torch.TensorIndex.Colon, torch.TensorIndex.Slice(1, 6)].@long();
 
                     var loss = lossFunction.forward(
-                        longTensorProjectionOutput,
-                        longTensorLabel.@long()).to(device);
+                        predictedTensor, labelTensor)
+                        .to(device);
 
                     optimizer.zero_grad();
                     loss.backward();
@@ -178,33 +183,45 @@ namespace MachineLearning
                 {
                     var encoderInput = batch["EncoderInput"].to(device);
                     var decoderInput = batch["DecoderInput"].to(device);
-                    var encoderMask = batch["EncoderMask"].to(device);
-                    var decoderMask = batch["DecoderMask"].to(device);
+                    var encoderMask = batch["EncoderInputMask"].to(device);
+                    var decoderMask = batch["DecoderInputMask"].to(device);
+                    var label = batch["Label"].to(device);
 
                     //Run tensors through the transformer
                     var encoderOutput = transformerModel.Encode(encoderInput, encoderMask).to(device);
                     var decoderOutput = transformerModel.Decode(encoderOutput, encoderMask,
-                                               decoderInput, decoderMask).to(device);
+                        decoderInput, decoderMask).to(device);
                     var projectionOutput = transformerModel.Project(decoderOutput).to(device);
 
-                    var label = batch["DecoderInput"].to(device);
+
+                    //Debug.WriteLine(projectionOutput.ToString(TensorStringStyle.Julia));
+
+                    //Debug.WriteLine(label.ToString(TensorStringStyle.Julia));
 
                     var longTensorProjectionOutput = torch.FloatTensor(
-                                               projectionOutput.view(-1, transformerModel.SourceVocabSize)).to(device);
+                        projectionOutput).to(device);
 
-                    var longTensorLabel = torch.LongTensor(label.view(-1)).to(device);
+                    var longTensorLabel = torch.LongTensor(label).to(device);
+
+                    //Debug.WriteLine(longTensorProjectionOutput.ToString(TensorStringStyle.Julia));
+                    //Debug.WriteLine(longTensorLabel.ToString(TensorStringStyle.Julia));
+
+                    var predictedTensor =
+                        longTensorProjectionOutput[torch.TensorIndex.Colon, torch.TensorIndex.Colon, torch.TensorIndex.Slice(1, 6)];
+
+                    var labelTensor = longTensorLabel[torch.TensorIndex.Colon, torch.TensorIndex.Slice(1, 6)].@long();
 
                     var loss = lossFunction.forward(
-                                               longTensorProjectionOutput,
-                                                                      longTensorLabel).to(device);
+                            predictedTensor, labelTensor)
+                        .to(device);
 
-                    Debug.WriteLine("Predicted: " + longTensorProjectionOutput.ToString(TensorStringStyle.Julia));
-                    Debug.WriteLine("Label: " + longTensorLabel.ToString(TensorStringStyle.Julia));
+                    Debug.WriteLine("Predicted: " + predictedTensor.ToString(TensorStringStyle.Julia));
+                    Debug.WriteLine("Label: " + labelTensor.ToString(TensorStringStyle.Julia));
                     Debug.WriteLine("Loss: " + loss.item<float>());
                     Debug.WriteLine("-----------------------------");
                     var l = loss.item<float>();
 
-                    writer.add_scalar("csharp/testing_loss", l, testingSteps);
+                    writer.add_scalar("csharp/validation_loss", l, testingSteps);
                     testingSteps++;
                 }
                 Debug.WriteLine("*****************************************************");
