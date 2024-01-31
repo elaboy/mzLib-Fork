@@ -224,6 +224,8 @@ namespace MachineLearning
                     writer.add_scalar("csharp/validation_loss", l, testingSteps);
                     testingSteps++;
                 }
+                transformerModel.save(@$"D:\AI_Datasets\transformerWarmup_Epoch_{currentEpoch}_TrainingSteps{trainingSteps}.dat");
+
                 Debug.WriteLine("*****************************************************");
             }
         }
@@ -233,7 +235,7 @@ namespace MachineLearning
             return new Dictionary<string, double>()
             {{"batchSize", 32},
             {"epochs", 10},
-            {"learningRate", 0.0001},
+            {"learningRate", 0.00001},
             {"sequenceLength", 150},
             {"dModel", 512}};
         }

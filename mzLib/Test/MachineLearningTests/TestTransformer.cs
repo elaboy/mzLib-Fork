@@ -221,7 +221,7 @@ namespace Test.MachineLearningTests
             var psms = Readers.SpectrumMatchTsvReader.ReadPsmTsv(
                     @"D:/AI_Datasets/Hela1_AllPSMs.psmtsv", out var warnings)
                 .Where(x => x.AmbiguityLevel == "1")
-                .Take(50000)
+                //.Take(50000)
                 .ToList();
 
             var tokenizedPsmsList = new List<List<string>>();
@@ -279,9 +279,9 @@ namespace Test.MachineLearningTests
             var testingDataset = new AARTNDataset(test);
             
             //dataloaders
-            var trainingDataLoader = new DataLoader(trainingDataset, 16, shuffle: true, new Device(DeviceType.CPU), 1, 1, true);
-            var validationDataLoader = new DataLoader(validationDataset, 16, shuffle: true, new Device(DeviceType.CPU), 1, 1, true);
-            var testingDataLoader = new DataLoader(testingDataset, 16, shuffle: true, new Device(DeviceType.CPU), 1, 1, true);
+            var trainingDataLoader = new DataLoader(trainingDataset, 10, shuffle: true, new Device(DeviceType.CPU), 1, 1, true);
+            var validationDataLoader = new DataLoader(validationDataset, 10, shuffle: true, new Device(DeviceType.CPU), 1, 1, true);
+            var testingDataLoader = new DataLoader(testingDataset, 10, shuffle: true, new Device(DeviceType.CPU), 1, 1, true);
             //var dataLoader = new DataLoader(dataset, 32, shuffle: true, null, 1, 1, true);
 
             var model = AARTN.EnsambleModel(2729, 100, 100, 100);
