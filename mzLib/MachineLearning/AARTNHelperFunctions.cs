@@ -121,6 +121,8 @@ namespace MachineLearning
             var writer = torch.utils.tensorboard.SummaryWriter(@"D:AI_Datasets/runs/FirstTransformerLog", 
                 createRunName: true);
 
+            var scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 1);
+
             int trainingSteps = 0;
             var testingSteps = 0;
 
@@ -156,13 +158,17 @@ namespace MachineLearning
                     //Debug.WriteLine(longTensorLabel.ToString(TensorStringStyle.Julia));
 
                     var predictedTensor =
-                        longTensorProjectionOutput[torch.TensorIndex.Colon, torch.TensorIndex.Colon, torch.TensorIndex.Slice(1, 6)];
+                        longTensorProjectionOutput[torch.TensorIndex.Colon,
+                            torch.TensorIndex.Colon, torch.TensorIndex.Slice(1, 6)];
 
-                    var labelTensor = longTensorLabel[torch.TensorIndex.Colon, torch.TensorIndex.Slice(1, 6)].@long();
+                    var labelTensor = longTensorLabel[torch.TensorIndex.Colon,
+                        torch.TensorIndex.Slice(1, 6)].@long();
 
                     var loss = lossFunction.forward(
-                        predictedTensor, labelTensor)
+                        longTensorProjectionOutput, longTensorLabel)
                         .to(device);
+
+                    Debug.WriteLine(loss.item<float>());
 
                     optimizer.zero_grad();
                     loss.backward();
@@ -174,6 +180,7 @@ namespace MachineLearning
                     writer.add_scalar("csharp/training_loss", l, trainingSteps);
                     trainingSteps++;
                 }
+                scheduler.step();
                 Debug.WriteLine("Epoch: " + currentEpoch + " Loss: " + lossTracker.Last());
 
                 Debug.WriteLine("Testing Section: ");
@@ -212,11 +219,11 @@ namespace MachineLearning
                     var labelTensor = longTensorLabel[torch.TensorIndex.Colon, torch.TensorIndex.Slice(1, 6)].@long();
 
                     var loss = lossFunction.forward(
-                            predictedTensor, labelTensor)
+                            longTensorProjectionOutput, longTensorLabel)
                         .to(device);
 
-                    Debug.WriteLine("Predicted: " + predictedTensor.ToString(TensorStringStyle.Julia));
-                    Debug.WriteLine("Label: " + labelTensor.ToString(TensorStringStyle.Julia));
+                    Debug.WriteLine("Predicted: " + longTensorProjectionOutput.ToString(TensorStringStyle.Julia));
+                    Debug.WriteLine("Label: " + longTensorLabel.ToString(TensorStringStyle.Julia));
                     Debug.WriteLine("Loss: " + loss.item<float>());
                     Debug.WriteLine("-----------------------------");
                     var l = loss.item<float>();
@@ -234,8 +241,8 @@ namespace MachineLearning
         {
             return new Dictionary<string, double>()
             {{"batchSize", 32},
-            {"epochs", 10},
-            {"learningRate", 0.00001},
+            {"epochs", 25},
+            {"learningRate", 0.001},
             {"sequenceLength", 150},
             {"dModel", 512}};
         }

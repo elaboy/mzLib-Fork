@@ -22,13 +22,13 @@ namespace MachineLearning
             var encoderInputList = data.Select(x => _integerIndexes.Contains(x) ? _maskingIndex : x);
             var encoderInput = torch.tensor(encoderInputList.ToArray());
             //Encoder Input Mask
-            var encoderInputMask = encoderInput.tile(new long[]{100,1}).tril(1);
+            var encoderInputMask = encoderInput.tile(new long[]{50,1}).tril(1);
             //Decoder Input
             var decoderInputList = data.Select(x => _integerIndexes.Contains(x) ? x : _maskingIndex);
             var decoderInput = torch.from_array(decoderInputList.ToArray());
 
             //Decoder Input Mask
-            var decoderInputMask = decoderInput.tile(new long[] { 100, 1 }).tril(1);
+            var decoderInputMask = decoderInput.tile(new long[] { 50, 1 }).tril(1);
 
 
             //Debug write line tensor to check them
