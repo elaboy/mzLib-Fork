@@ -425,6 +425,142 @@ namespace Test.MachineLearningTests
         }
 
         [Test]
+        public void TestCNNWithAttention()
+        {
+            List<Tokens> tokens = new List<Tokens>();
+            using (var reader =
+                   new StreamReader(@"D:\AI_Datasets\VocabularyForTransformerUnimod_CarbamidomethylOnCOnly.csv"))
+            using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+            {
+                tokens.AddRange(csv.GetRecords<Tokens>().ToList());
+            }
+
+            var psms = Readers.SpectrumMatchTsvReader.ReadPsmTsv(
+                    @"D:/AI_Datasets/Hela1_AllPSMs.psmtsv", out var warnings)
+                .Where(x => x.AmbiguityLevel == "1" && x.QValue <= 0.01 &&
+                            x.FullSequence.Contains("Carbamidomethyl on C") ||
+                            x.FullSequence.Contains("Oxidation on M") ||
+                            x.FullSequence.Contains("Phosphoserine on S") ||
+                            !x.FullSequence.Contains("["))
+                //.Take(50000)
+                .ToList();
+
+            var tokenizedPsmsList = new List<List<string>>();
+
+            foreach (var psm in psms)
+            {
+                tokenizedPsmsList.Add(TokenGeneration.TokenizeRetentionTimeWithFullSequence(psm));
+            }
+
+            var tokenizedPsmsIds = new List<List<int>>();
+
+            //get integers id for tokens to mask
+            var rangeOfPositionIndicativeTokens = Enumerable.Range(1, 5);
+
+            foreach (var tokenList in tokenizedPsmsList)
+            {
+                List<int> tokenIdList = new();
+
+                foreach (var token in tokenList)
+                {
+                    if (tokens.Find(x => x.Token == token) is null &&
+                        !token.Contains(
+                            '_')) //Checks if token is a number, if not clear list and break without adding to main list
+                    {
+                        tokenIdList.Clear();
+                        break;
+                    }
+
+                    if (int.TryParse(token[0].ToString(),
+                            out var result)) //Takes care of retention time numbers and array positions
+                    {
+                        foreach (var subString in token)
+                            tokenIdList.Add(tokens.Find(x => x.Token == subString.ToString()).Id);
+                    }
+                    else
+                    {
+                        if (tokens.Any(x =>
+                                x.Token ==
+                                token)) //takes all the other non numerical tokens and adds their id to the list
+                        {
+                            tokenIdList.Add(tokens.Find(x => x.Token == token).Id);
+                        }
+                    }
+                }
+
+                if (tokenIdList.Count != 0) //Empty list is not added to main list
+                    tokenIdList =
+                        TokenGeneration.PaddingIntegerList(tokenIdList, 0,
+                            60); //makes sure padding is done right with desired length
+                else
+                    continue;
+
+                tokenizedPsmsIds.Add(tokenIdList);
+            }
+
+            //var dataset = new AARTNDataset(tokenizedPsmsIds);
+
+            var (train, validate, test) = TokenGeneration.TrainValidateTestSplit(tokenizedPsmsIds);
+
+            //datasets
+            var trainingDataset = new AARTNDataset(train);
+            var validationDataset = new AARTNDataset(validate);
+            var testingDataset = new AARTNDataset(test);
+
+            //dataloaders
+            var trainingDataLoader =
+                new DataLoader(trainingDataset, 64, shuffle: true, new Device(DeviceType.CPU), 1, 1, true);
+            var validationDataLoader = new DataLoader(validationDataset, 64, shuffle: true, new Device(DeviceType.CPU),
+                1, 1, true);
+            var testingDataLoader =
+                new DataLoader(testingDataset, 64, shuffle: true, new Device(DeviceType.CPU), 1, 1, true);
+            //var dataLoader = new DataLoader(dataset, 32, shuffle: true, null, 1, 1, true);
+
+            Debug.WriteLine(trainingDataLoader.Count);
+            Debug.WriteLine(validationDataLoader.Count);
+            Debug.WriteLine(testingDataLoader.Count);
+
+            var model = torch.nn.Sequential();
+            model.add_module("EmbeddingLayer", nn.Embedding(60, 256, padding_idx:0));
+            model.add_module("Conv1", torch.nn.Conv2d(256, 512, 3));
+            model.add_module("Conv2", torch.nn.Conv2d(512, 256, 3));
+            model.add_module("MaxPooling1", torch.nn.MaxPool2d(3));
+            model.add_module("AttentionHeads", torch.nn.MultiheadAttention(256, 8));
+            model.add_module("Flatten", torch.nn.Flatten());
+            model.add_module("Linear1", torch.nn.Linear(256, 128));
+            model.add_module("Linear2", torch.nn.Linear(128, 60));
+
+            var optimizer = optim.Adam(model.parameters(), 0.001);
+            var lossFunction = nn.MSELoss();
+
+            for (int i = 0; i < 10; i++)
+            {
+                Debug.WriteLine(i);
+                foreach (var batch in trainingDataLoader)
+                {
+                    var encoderInput = batch["EncoderInput"].@float();
+                    var decoderInput = batch["DecoderInput"].@float();
+
+                    encoderInput.requires_grad = true;
+                    decoderInput.requires_grad = true;
+
+                    var prediction = model.forward(encoderInput);
+                    var loss = lossFunction.forward(prediction, decoderInput);
+
+                    Debug.WriteLine(loss.item<float>());
+
+                    optimizer.zero_grad();
+                    loss.backward();
+                    optimizer.step();
+
+                    //lossTracker.Add(loss.item<float>());
+
+
+                }
+            }
+        }
+
+        [Test]
         public void TestTokensFeaturizer()
         {
             var tokens = new List<Tokens>();

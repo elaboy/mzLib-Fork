@@ -58,5 +58,10 @@ namespace MachineLearning.RetentionTimePredictionModels
 
             return transformer;
         }
+
+        //public static object EnsambleAttentionCNN()
+        //{
+
+        //}
     }
 }
