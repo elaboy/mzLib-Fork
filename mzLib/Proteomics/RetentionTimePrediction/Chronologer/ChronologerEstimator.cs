@@ -62,20 +62,20 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
         /// <returns></returns>
         private static torch.Tensor Tensorize(string baseSequence, string fullSequence)
         {
-            var fullSeq = fullSequence.Split(new[] { '[', ']' })
+            var fullSeq = fullSequence.Split(new[] { '*' })
                 .Where(x => !x.Equals("")).ToArray();
 
 
-            //section to remoce type of mod from the sequence
-            //e.g. Common Fixed:Carbamidomethyl and only stay with the target aa after the mod
-            for (int i = 0; i < fullSeq.Length; i++)
-            {
-                if (fullSeq[i].Contains(" "))
-                {
-                    var tempSeq = fullSeq[i].Split(':');
-                    fullSeq[i] = tempSeq[1];
-                }
-            }
+            ////section to remoce type of mod from the sequence
+            ////e.g. Common Fixed:Carbamidomethyl and only stay with the target aa after the mod
+            //for (int i = 0; i < fullSeq.Length; i++)
+            //{
+            //    if (fullSeq[i].Contains(" "))
+            //    {
+            //        var tempSeq = fullSeq[i].Split(':');
+            //        fullSeq[i] = tempSeq[1];
+            //    }
+            //}
 
             if (baseSequence.Length <= 50) //Chronologer only takes sequences of length 50 or less
             {
@@ -85,7 +85,7 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
                 var tensorCounter = 1; //skips the first element which is the C-terminus in the tensor
                 char modID = ' '; //takes the target aa from inside the loop to hold it for the next loop
 
-                bool mod = fullSequence[0] == '['; // true if the first loop is a mod
+                bool mod = fullSequence[0] == '*'; // true if the first loop is a mod
 
                 foreach (var subString in fullSeq)
                 {

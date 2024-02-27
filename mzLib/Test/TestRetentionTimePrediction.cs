@@ -5,8 +5,15 @@ using Proteomics.RetentionTimePrediction;
 using Proteomics.RetentionTimePrediction.Chronologer;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Omics.Modifications;
 using Stopwatch = System.Diagnostics.Stopwatch;
+using CsvHelper.Configuration.Attributes;
+using CsvHelper.Configuration;
+using CsvHelper;
+using System.Globalization;
+using System.IO;
+using System.Linq;
 
 namespace Test
 {
@@ -746,8 +753,78 @@ namespace Test
 
             var invalidSequence = model.PredictRetentionTime(testingData[3].Item1, testingData[3].Item2);
             Assert.That(invalidSequence == null);
+        }
 
+        [Test]
+        public void TestChronologerWithAVGFile()
+        {
+            var data = new CalibratedRetentionTimes(@"C:\Users\elabo\Documents\MannPeptideResults\CalibratorTestingMultipleFilesSmall.csv");
+            var sequences = data.RetentionTimeDictionary;
+            ChronologerEstimator model = new ChronologerEstimator();
 
+            foreach (var sequence in sequences)
+            {
+                var prediction = model.PredictRetentionTime(sequence.Key, sequence.Key);
+                Debug.WriteLine(prediction);
+            }
+        }
+
+        [Test]
+        public void TestSSRCalcWithAVGFile()
+        {
+            SSRCalc3 calc = new SSRCalc3("SSRCalc 3.0 (100A)", SSRCalc3.Column.A100);
+
+            var data = new CalibratedRetentionTimes(
+                @"C:\Users\elabo\Documents\MannPeptideResults\CalibratorTestingMultipleFilesSmallBrackets.csv");
+            var sequences = data.RetentionTimeDictionary.Keys.Select(x => x.ToString()).Where(x => !x.Contains('[')).ToList();
+            foreach (var sequence in sequences)
+            {
+                var sequence2 = new PeptideWithSetModifications(sequence,
+                    new Dictionary<string, Modification>());
+                if (!sequence2.FullSequence.Contains('['))
+                {
+                    var prediction = calc.ScoreSequence(sequence2);
+                    Debug.WriteLine(prediction);
+                }
+
+            }
+        }
+    }
+
+    internal class CalibratedRetentionTimes
+    {
+        [Name("FullSequence")]
+        public List<string> FullSequence { get; private set; }
+        [Name("Mean")]
+        public List<double?> Mean { get; private set; }
+        [Name("Variance")]
+        public List<double?> Variance { get; private set; }
+
+        public Dictionary<string, double?> RetentionTimeDictionary { get; set; }
+        public CalibratedRetentionTimes(string path)
+        {
+            //read csv columns FullSequence, Mean, and  Variance
+            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                //HeaderValidated = null
+            };
+            using (var reader = new StreamReader(path))
+            using (var csv = new CsvReader(reader, config))
+            {
+                var records = csv.GetRecords<dynamic>().ToList();
+                var fullSequence = records.Select(x => x.FullSequence as string).ToList();
+                var mean = records.Select(x => double.Parse(x.Mean) as double?).ToList();
+                var variance = records.Select(x => double.Parse(x.Variance) as double?).ToList();
+
+                FullSequence = fullSequence;
+                Mean = mean;
+                Variance = variance;
+            }
+            RetentionTimeDictionary = new Dictionary<string, double?>();
+            for (int i = 0; i < FullSequence.Count; i++)
+            {
+                RetentionTimeDictionary.Add(FullSequence[i], Mean[i]);
+            }
         }
     }
 }
