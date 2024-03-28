@@ -1,418 +1,211 @@
-﻿using System;
-using Proteomics;
+﻿namespace Proteomics;
 
-namespace Proteomics;
-
-public class LonePairElectrons : IBuildingBlocks
+public class Electron : IBuildingBlocks
 {
-    public DetailedElement BuildingBlock { get; set; } = null;
-
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[2];
-    public AtomicRadius AtomicRadius { get; set; } = null;
-    public double PartialCharge { get; set; }
-
-    public LonePairElectrons() : base() { }
-
-    public void Protonate()
-    {
-        throw new NotImplementedException();
-    }
+    public IBuildingBlocks[] Bonds { get; set; } = new SideChain[1];
 }
-
-
-#region Elemental
-public class Carbon : IBuildingBlocks
-{
-    public DetailedElement BuildingBlock { get; set; } = new DetailedElement("C", 6, 12.0000000000, 2.55);
-
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)ValenceElectrons.C];
-    public AtomicRadius AtomicRadius { get; set; }
-    public double PartialCharge { get; set; }
-
-    public Carbon() : base()
-    { }
-}
-
-public class Nitrogen : IBuildingBlocks
-{
-    public DetailedElement BuildingBlock { get; set; } = new DetailedElement("N", 7, 14.00307400443, 3.04);
-
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)ValenceElectrons.N];
-    public AtomicRadius AtomicRadius { get; set; }
-    public double PartialCharge { get; set; }
-
-    public Nitrogen() : base() { }
-
-    public void Protonate()
-    {
-        throw new NotImplementedException();
-    }
-}
-
-public class Oxygen : IBuildingBlocks
-{
-    public DetailedElement BuildingBlock { get; set; } = new DetailedElement("O", 8, 15.99491461957, 3.44);
-
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)ValenceElectrons.O];
-    public AtomicRadius AtomicRadius { get; set; }
-    public double PartialCharge { get; set; }
-
-    public Oxygen() : base() { }
-
-    public void Protonate()
-    {
-        throw new NotImplementedException();
-    }
-}
-
-public class Hydrogen : IBuildingBlocks
-{
-    public DetailedElement BuildingBlock { get; set; } = new DetailedElement("H", 1, 1.00782503207, 2.20);
-
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)ValenceElectrons.H];
-    public AtomicRadius AtomicRadius { get; set; }
-    public double PartialCharge { get; set; }
-
-    public Hydrogen() : base() { }
-
-    public void Protonate()
-    {
-        throw new NotImplementedException();
-    }
-}
-
-public class Sulfur : IBuildingBlocks
-{
-    public DetailedElement BuildingBlock { get; set; } = new DetailedElement("S", 16, 32.065, 2.58);
-
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)ValenceElectrons.S];
-    public AtomicRadius AtomicRadius { get; set; }
-    public double PartialCharge { get; set; }
-
-    public Sulfur() : base() { }
-
-    public void Protonate()
-    {
-        throw new NotImplementedException();
-    }
-}
-
-public class Phosphorus : DetailedElement, IBuildingBlocks
-{
-    public DetailedElement BuildingBlock { get; set; } = new DetailedElement("P", 15, 30.97376199842, 2.19);
-
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)ValenceElectrons.P];
-    public AtomicRadius AtomicRadius { get; set; }
-    public double PartialCharge { get; set; }
-
-    public Phosphorus() : base() { }
-
-    public void Protonate()
-    {
-        throw new NotImplementedException();
-    }
-}
-#endregion
-
 
 #region SideChains
+
 //https://bmrb.cerm.unifi.it/referenc/commonaa.php?tyr
-public class Alanine : IBuildingBlocks
+public class Alanine : SideChain
 {
-    public DetailedElement? BuildingBlock { get; set; } = null;
-
     //todo: add the side chain atoms
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)GreekCarbons.Alpha];
+    public SideChain[] Bonds { get; set; } = new SideChain[(int)GreekCarbons.Alpha];
 
-    public Alanine(Backbone backbone) : base() { }
-
-    public void Protonate()
+    public Alanine(Backbone backbone) : base(backbone) 
     {
-        throw new NotImplementedException();
     }
 }
 
-public class Cysteine : IBuildingBlocks
+public class Cysteine : SideChain
 {
-    public DetailedElement? BuildingBlock { get; set; } = null;
-
     //todo: add the side chain atoms
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)GreekCarbons.Alpha];
+    public SideChain[] Bonds { get; set; } = new SideChain[(int)GreekCarbons.Alpha];
 
-    public Cysteine(Backbone backbone) : base() { }
-
-    public void Protonate()
+    public Cysteine(Backbone backbone) : base(backbone)
     {
-        throw new NotImplementedException();
     }
 }
 
-public class AsparticAcid : IBuildingBlocks
+public class AsparticAcid : SideChain
 {
-    public DetailedElement? BuildingBlock { get; set; } = null;
-
     //todo: add the side chain atoms
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)GreekCarbons.Alpha];
+    public SideChain[] Bonds { get; set; } = new SideChain[(int)GreekCarbons.Alpha];
 
-    public AsparticAcid(Backbone backbone) : base() { }
-
-    public void Protonate()
+    public AsparticAcid(Backbone backbone) : base(backbone)
     {
-        throw new NotImplementedException();
     }
 }
 
-public class GlutamicAcid : IBuildingBlocks
+public class GlutamicAcid : SideChain
 {
-    public DetailedElement? BuildingBlock { get; set; } = null;
     //todo: add the side chain atoms
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)GreekCarbons.Alpha];
+    public SideChain[] Bonds { get; set; } = new SideChain[(int)GreekCarbons.Alpha];
 
-    public GlutamicAcid(Backbone backbone) : base() { }
-
-    public void Protonate()
+    public GlutamicAcid(Backbone backbone) : base(backbone)
     {
-        throw new NotImplementedException();
     }
 }
 
-public class Phenylalanine : IBuildingBlocks
+public class Phenylalanine : SideChain
 {
-    public DetailedElement? BuildingBlock { get; set; } = null;
-
     //todo: add the side chain atoms
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)GreekCarbons.Alpha];
+    public SideChain[] Bonds { get; set; } = new SideChain[(int)GreekCarbons.Alpha];
 
-    public Phenylalanine(Backbone backbone) : base() { }
-
-    public void Protonate()
+    public Phenylalanine(Backbone backbone) : base(backbone)
     {
-        throw new NotImplementedException();
     }
 }
 
-public class Glycine : IBuildingBlocks
+public class Glycine : SideChain
 {
-    public DetailedElement? BuildingBlock { get; set; } = null;
-
     //todo: add the side chain atoms
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)GreekCarbons.Alpha];
+    public SideChain[] Bonds { get; set; } = new SideChain[(int)GreekCarbons.Alpha];
 
-    public Glycine(Backbone backbone) : base() { }
-
-    public void Protonate()
+    public Glycine(Backbone backbone) : base(backbone)
     {
-        throw new NotImplementedException();
     }
 }
 
-public class Histidine : IBuildingBlocks
+public class Histidine : SideChain
 {
-    public DetailedElement? BuildingBlock { get; set; } = null;
-
     //todo: add the side chain atoms
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)GreekCarbons.Alpha];
+    public SideChain[] Bonds { get; set; } = new SideChain[(int)GreekCarbons.Alpha];
 
-    public Histidine(Backbone backbone) : base() { }
-
-    public void Protonate()
+    public Histidine(Backbone backbone) : base(backbone)
     {
-        throw new NotImplementedException();
     }
 }
 
-public class Isoleucine : IBuildingBlocks
+public class Isoleucine : SideChain
 {
-    public DetailedElement? BuildingBlock { get; set; } = null;
-
     //todo: add the side chain atoms
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)GreekCarbons.Alpha];
+    public SideChain[] Bonds { get; set; } = new SideChain[(int)GreekCarbons.Alpha];
 
-    public Isoleucine(Backbone backbone) : base() { }
-
-    public void Protonate()
+    public Isoleucine(Backbone backbone) : base(backbone)
     {
-        throw new NotImplementedException();
     }
 }
 
-public class Lysine : IBuildingBlocks
+public class Lysine : SideChain
 {
-    public DetailedElement? BuildingBlock { get; set; } = null;
-
     //todo: add the side chain atoms
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)GreekCarbons.Alpha];
+    public SideChain[] Bonds { get; set; } = new SideChain[(int)GreekCarbons.Alpha];
 
-    public Lysine(Backbone backbone) : base() { }
-
-    public void Protonate()
+    public Lysine(Backbone backbone) : base(backbone)
     {
-        throw new NotImplementedException();
     }
 }
 
-public class Leucine : IBuildingBlocks
+public class Leucine : SideChain
 {
-    public DetailedElement? BuildingBlock { get; set; } = null;
-
     //todo: add the side chain atoms
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)GreekCarbons.Alpha];
+    public SideChain[] Bonds { get; set; } = new SideChain[(int)GreekCarbons.Alpha];
 
-    public Leucine(Backbone backbone) : base() { }
-
-    public void Protonate()
+    public Leucine(Backbone backbone) : base(backbone)
     {
-        throw new NotImplementedException();
     }
 }
 
-public class Methionine : IBuildingBlocks
+public class Methionine : SideChain
 {
-    public DetailedElement? BuildingBlock { get; set; } = null;
-
     //todo: add the side chain atoms
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)GreekCarbons.Alpha];
+    public SideChain[] Bonds { get; set; } = new SideChain[(int)GreekCarbons.Alpha];
 
-    public Methionine(Backbone backbone) : base() { }
-
-    public void Protonate()
+    public Methionine(Backbone backbone) : base(backbone)
     {
-        throw new NotImplementedException();
     }
 }
 
-public class Asparagine : IBuildingBlocks
+public class Asparagine : SideChain
 {
-    public DetailedElement? BuildingBlock { get; set; } = null;
-
     //todo: add the side chain atoms
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)GreekCarbons.Alpha];
+    public SideChain[] Bonds { get; set; } = new SideChain[(int)GreekCarbons.Alpha];
 
-    public Asparagine(Backbone backbone) : base() { }
-
-    public void Protonate()
+    public Asparagine(Backbone backbone) : base(backbone)
     {
-        throw new NotImplementedException();
     }
 }
 
-public class Proline : IBuildingBlocks
+public class Proline : SideChain
 {
-    public DetailedElement? BuildingBlock { get; set; } = null;
-
     //todo: add the side chain atoms
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)GreekCarbons.Alpha];
+    public SideChain[] Bonds { get; set; } = new SideChain[(int)GreekCarbons.Alpha];
 
-    public Proline(Backbone backbone) : base() { }
-
-    public void Protonate()
+    public Proline(Backbone backbone) : base(backbone)
     {
-        throw new NotImplementedException();
     }
 }
 
-public class Glutamine : IBuildingBlocks
+public class Glutamine : SideChain
 {
-    public DetailedElement? BuildingBlock { get; set; } = null;
-
     //todo: add the side chain atoms
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)GreekCarbons.Alpha];
+    public SideChain[] Bonds { get; set; } = new SideChain[(int)GreekCarbons.Alpha];
 
-    public Glutamine(Backbone backbone) : base() { }
-
-    public void Protonate()
+    public Glutamine(Backbone backbone) : base(backbone)
     {
-        throw new NotImplementedException();
     }
 }
 
-public class Arginine : IBuildingBlocks
+public class Arginine : SideChain
 {
-    public DetailedElement? BuildingBlock { get; set; } = null;
-
     //todo: add the side chain atoms
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)GreekCarbons.Alpha];
+    public SideChain[] Bonds { get; set; } = new SideChain[(int)GreekCarbons.Alpha];
 
-    public Arginine(Backbone backbone) : base() { }
-
-    public void Protonate()
+    public Arginine(Backbone backbone) : base(backbone)
     {
-        throw new NotImplementedException();
     }
 }
 
-public class Serine : IBuildingBlocks
+public class Serine : SideChain
 {
-    public DetailedElement? BuildingBlock { get; set; } = null;
-
     //todo: add the side chain atoms
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)GreekCarbons.Alpha];
+    public SideChain[] Bonds { get; set; } = new SideChain[(int)GreekCarbons.Alpha];
 
-    public Serine(Backbone backbone) : base() { }
-
-    public void Protonate()
+    public Serine(Backbone backbone) : base(backbone)
     {
-        throw new NotImplementedException();
     }
 }
 
-public class Threonine : IBuildingBlocks
+public class Threonine : SideChain
 {
-    public DetailedElement? BuildingBlock { get; set; } = null;
-
     //todo: add the side chain atoms
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)GreekCarbons.Alpha];
+    public SideChain[] Bonds { get; set; } = new SideChain[(int)GreekCarbons.Alpha];
 
-    public Threonine(Backbone backbone) : base() { }
-
-    public void Protonate()
+    public Threonine(Backbone backbone) : base(backbone)
     {
-        throw new NotImplementedException();
     }
 }
 
-public class Valine : IBuildingBlocks
+public class Valine : SideChain
 {
-    public DetailedElement? BuildingBlock { get; set; } = null;
-
     //todo: add the side chain atoms
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)GreekCarbons.Alpha];
+    public SideChain[] Bonds { get; set; } = new SideChain[(int)GreekCarbons.Alpha];
 
-    public Valine(Backbone backbone) : base() { }
-
-    public void Protonate()
+    public Valine(Backbone backbone) : base(backbone)
     {
-        throw new NotImplementedException();
     }
 }
 
-public class Tryptophan : IBuildingBlocks
+public class Tryptophan : SideChain
 {
-    public DetailedElement? BuildingBlock { get; set; } = null;
-
     //todo: add the side chain atoms
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)GreekCarbons.Alpha];
+    public SideChain[] Bonds { get; set; } = new SideChain[(int)GreekCarbons.Alpha];
 
-    public Tryptophan(Backbone backbone) : base() { }
-
-    public void Protonate()
+    public Tryptophan(Backbone backbone) : base(backbone)
     {
-        throw new NotImplementedException();
     }
 }
 
-public class Tyrosine : IBuildingBlocks
+public class Tyrosine : SideChain
 {
-    public DetailedElement? BuildingBlock { get; set; } = null;
-
     //todo: add the side chain atoms
-    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)GreekCarbons.Alpha];
+    public SideChain[] Bonds { get; set; } = new SideChain[(int)GreekCarbons.Alpha];
 
-    public Tyrosine(Backbone backbone) : base() { }
-
-    public void Protonate()
+    public Tyrosine(Backbone backbone) : base(backbone)
     {
-        throw new NotImplementedException();
     }
 }
+
 #endregion

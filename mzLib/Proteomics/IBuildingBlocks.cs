@@ -2,17 +2,18 @@
 
 public interface IBuildingBlocks
 {
-    public DetailedElement? BuildingBlock { get; set; }
     public IBuildingBlocks[] Bonds { get; set; }
 
-    public void Protonate()
+    //todo: method to get all atoms connected to this block
+
+    //todo: method to retrieve all atoms in the block
+}
+
+public class SideChain : IBuildingBlocks
+{
+    public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[9];
+
+    public SideChain(Backbone backbone)
     {
-        for (int i = 0; i < Bonds.Length; i++)
-        {
-            if (Bonds[i].BuildingBlock == null)
-            {
-                Bonds[i] = new Hydrogen();
-            }
-        }
     }
 }

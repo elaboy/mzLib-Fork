@@ -1,53 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
-using Chemistry;
 
 namespace Proteomics;
-public class Nterminus
-{
-    public static ChemicalFormula AtomicComposition = new ChemicalFormula(ChemicalFormula.ParseFormula("C2H2NO"));
-    public static ChemicalFormula? Modification = new ChemicalFormula();
-
-    public Nterminus()
-    {
-
-    }
-}
-
-public class Cterminus
-{
-    public static ChemicalFormula AtomicComposition = new ChemicalFormula(ChemicalFormula.ParseFormula("C2HO2"));
-    public Cterminus()
-    {
-
-    }
-}
-
-public class Node
-{
-    public Backbone NodeBackbone { get; private set; }
-    public RGroup NodeSideChain { get; private set; }
-    public Node? PreviousNode { get; private set; }
-    public Node? NextNode { get; private set; }
-    public int NodeNumber { get; private set; }
-
-    public Node(RGroup residue, Node? previousNode, Node? nextNode)
-    {
-        NodeSideChain = residue;
-        PreviousNode = previousNode;
-        NextNode = nextNode;
-    }
-}
-
-public class RGroup
-{
-    public ChemicalFormula RGroupFormula { get; private set; }
-    public RGroup()
-    {
-
-    }
-}
 
 public class AtomicRadius
 {
@@ -86,7 +41,3 @@ public class AtomicRadius
         return element.AtomicRadiusVDW;
     }
 }
-
-
-
-
