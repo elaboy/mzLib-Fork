@@ -8,33 +8,40 @@ namespace Proteomics;
 public class Carbon : DetailedElement
 {
     public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)ValenceElectrons.C];
+    public Greek CarbonType { get; set; }
     public AtomicRadius AtomicRadius { get; set; }
     public double PartialCharge { get; set; }
 
-    public Carbon() : base("C", 6, 12.0000000000, 2.55)
+    public Carbon(Greek carbonType, bool protonated = false) :
+        base("C", 6, 12.0000000000, 2.55, protonated)
     {
+        CarbonType = carbonType;
     }
 }
 
 public class Nitrogen : DetailedElement
 {
     public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)ValenceElectrons.N];
+    public Greek NitrogenType { get; set; }
     public AtomicRadius AtomicRadius { get; set; }
     public double PartialCharge { get; set; }
 
-    public Nitrogen() : base("N", 7, 14.00307400443, 3.04)
+    public Nitrogen(Greek nitrogenType) : base("N", 7, 14.00307400443, 3.04)
     {
+        NitrogenType = nitrogenType;
     }
 }
 
 public class Oxygen : DetailedElement
 {
     public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)ValenceElectrons.O];
+    public Greek OxygenType { get; set; }
     public AtomicRadius AtomicRadius { get; set; }
     public double PartialCharge { get; set; }
 
-    public Oxygen() : base("O", 8, 15.99491461957, 3.44)
+    public Oxygen(Greek oxygenType) : base("O", 8, 15.99491461957, 3.44)
     {
+        OxygenType = oxygenType;
     }
 }
 
@@ -54,9 +61,10 @@ public class Sulfur : DetailedElement
     public IBuildingBlocks[] Bonds { get; set; } = new IBuildingBlocks[(int)ValenceElectrons.S];
     public AtomicRadius AtomicRadius { get; set; }
     public double PartialCharge { get; set; }
-
-    public Sulfur() : base("S", 16, 32.065, 2.58)
+    public Greek SulfurType { get; set; }
+    public Sulfur(Greek sulfurType) : base("S", 16, 32.065, 2.58)
     {
+        SulfurType = sulfurType;
     }
 }
 
@@ -82,10 +90,13 @@ public class DetailedElement : Element, IBuildingBlocks
     public double FormalCharge { get; set; }
     public IBuildingBlocks[] Bonds { get; set; }
 
-    public DetailedElement(string symbol, int atomicNumber, double averageMass, double paulingElectronegativity)
+    public DetailedElement(string symbol, int atomicNumber, double averageMass, double paulingElectronegativity, bool protonated = false)
         : base(symbol, atomicNumber, averageMass)
     {
         PaulingElectronegativity = paulingElectronegativity;
+        if (protonated) 
+            Protonate();
+        
     }
 
     public void Protonate()
