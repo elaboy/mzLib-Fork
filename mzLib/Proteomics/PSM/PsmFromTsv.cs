@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using MassSpectrometry;
 using Omics.Fragmentation;
 using Omics.SpectrumMatch;
 
 namespace Proteomics.PSM
 {
-    public class PsmFromTsv : SpectrumMatchFromTsv
+    public class PsmFromTsv : SpectrumMatchFromTsv, IRetentionTimeAlignable
     {
 
         public string ProteinAccession => Accession;
@@ -43,6 +44,12 @@ namespace Proteomics.PSM
         public string GlycanComposition { get; set; }
         public LocalizationLevel? GlycanLocalizationLevel { get; set; }
         public string LocalizedGlycan { get; set; }
+
+        //For Alignmer Class
+        public string FileName { get => FileNameWithoutExtension; set => FileName = FileNameWithoutExtension ; }
+        public double RetentionTime { get => RetentionTime ; set => RetentionTime = base.RetentionTime.Value; }
+
+        public string Identifier => throw new NotImplementedException();
 
         public PsmFromTsv(string line, char[] split, Dictionary<string, int> parsedHeader)
         {

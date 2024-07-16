@@ -1,10 +1,11 @@
 ﻿using Microsoft.ML;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using Easy.Common.Extensions;
 
 namespace MassSpectrometry;
-internal class RetentionTimeAligner
+public class RetentionTimeAligner
 {
     public List<IRetentionTimeAlignable> AllSpeciesInAllFiles { get; set; }
 
@@ -42,13 +43,20 @@ internal class RetentionTimeAligner
             {
                 HarmonizedSpecies.Add(identifier.Identifier, new Dictionary<string, double>());
                 HarmonizedSpecies[identifier.Identifier].Add(firstLeader.Key, identifier.RetentionTime);
-
             }
         }
 
         // One iteration of PairwiseCalibration to set an initial calibration
         foreach (var file in FilesInHarmonizer.Where(x => !x.Key.Equals(firstLeader.Key)))
             InitialPairWiseCalibration(file.Key);
+    }
+
+    //TODO: MAKE RETURNING RESULTS METHOD AND AN IN PLACE SUBSTITUTION
+
+    public Dictionary<string, Dictionary<string, double>> Calibrate(out List<string> warnings, int epochs = 1, int minimumAnchors = 2)
+    {
+        Dictionary<string, Dictionary<string, double>> harmonizedSpecies = 
+
     }
 
     public void Calibrate(int epochs = 1, int minimumAnchors = 2)
@@ -114,7 +122,7 @@ internal class RetentionTimeAligner
         }
     }
 
-    public PredictionEngine<PreCalibrated, Calibrated> MakePipeline(Dictionary<string, (float anchorRetentionTime, float retentionTime)> anchors)
+    private PredictionEngine<PreCalibrated, Calibrated> MakePipeline(Dictionary<string, (float anchorRetentionTime, float retentionTime)> anchors)
     {
         MLContext mlContext = new MLContext();
 
