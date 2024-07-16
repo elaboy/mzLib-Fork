@@ -1,8 +1,10 @@
-﻿using Microsoft.ML;
+﻿using Easy.Common.Extensions;
+using MathNet.Numerics.Statistics;
+using Microsoft.ML;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using Easy.Common.Extensions;
+using System.Threading.Tasks;
 
 namespace MassSpectrometry;
 public class RetentionTimeAligner
@@ -12,6 +14,8 @@ public class RetentionTimeAligner
     public Dictionary<string, List<IRetentionTimeAlignable>> FilesInHarmonizer = new();
 
     public Dictionary<string, Dictionary<string, double>> HarmonizedSpecies = new();
+
+    public RetentionTimeAligner() { }
 
     public RetentionTimeAligner(List<IRetentionTimeAlignable> retentionTimeAlignables)
     {
@@ -51,13 +55,101 @@ public class RetentionTimeAligner
             InitialPairWiseCalibration(file.Key);
     }
 
-    //TODO: MAKE RETURNING RESULTS METHOD AND AN IN PLACE SUBSTITUTION
-
-    public Dictionary<string, Dictionary<string, double>> Calibrate(out List<string> warnings, int epochs = 1, int minimumAnchors = 2)
+    public Dictionary<string, double> QueryLibraryForRetentionTimes(List<string> identifiers)
     {
-        Dictionary<string, Dictionary<string, double>> harmonizedSpecies = 
+        List<(string, double)> matches = new(identifiers.Count);
 
+        Parallel.For(0, matches.Count, index =>
+        {
+            (string, double) match = (identifiers[index], HarmonizedSpecies[identifiers[index]].Values
+                .Select(x => x).Mean());
+            if (!Double.IsNaN(match.Item2))
+                matches[index] = (match.Item1, match.Item2);
+            else
+            {
+                matches[index] = (match.Item1, -99);
+            }
+        });
+
+        matches = matches.Where(x => !x.Item2.Equals( -99)).ToList();
+
+        return matches.ToDictionary(p => p.Item1, p => p.Item2);
     }
+
+    /// <summary>
+    /// Copies and returns the results of the calibration.
+    /// WARNING: this method will consume more memory because it creates a deep copy to avoid in-place replacements.
+    /// </summary>
+    /// <param name="warnings"></param>
+    /// <param name="epochs"></param>
+    /// <param name="minimumAnchors"></param>
+    /// <returns></returns>
+    //public Dictionary<string, Dictionary<string, double>> __Calibrate(int epochs = 1, int minimumAnchors = 2)
+    //{
+    //    var aligner = DeepCopy();
+
+    //    for (int epoch = 0; epoch < epochs; epoch++)
+    //    {
+    //        foreach (var file in aligner.FilesInHarmonizer.Keys)
+    //        {
+    //            var anchorsAvailable = aligner.HarmonizedSpecies
+    //                .Where(x => x.Value.Count >= minimumAnchors)
+    //                .Select(x => x.Key).ToList();
+
+    //            // pop out the file to re-calibrate
+    //            var toCalibrate = aligner.HarmonizedSpecies
+    //                .Where(x => x.Value.ContainsKey(file) &
+    //                            anchorsAvailable.Contains(x.Key))
+    //                .ToDictionary(p => p.Key, p => p.Value);
+
+    //            //removes the popped out file from the Harmonized Species
+    //            aligner.HarmonizedSpecies.ForEach(x => x.Value.Remove(file));
+
+    //            // get anchors
+    //            var filesInteresected = aligner.HarmonizedSpecies.Keys
+    //                .Intersect(aligner.FilesInHarmonizer[file]
+    //                    .Select(x => x.Identifier)).ToList();
+
+    //            var anchors1 = filesInteresected
+    //                .SelectMany(x => aligner.HarmonizedSpecies[x]
+    //                    .Select(p => p.Value)).ToList();
+
+    //            var anchors2 = filesInteresected
+    //                .SelectMany(x => aligner.FilesInHarmonizer[file]
+    //                    .Select(x => x.RetentionTime)).ToList();
+
+    //            var anchors = new Dictionary<string, (float anchorRetentionTime, float retentionTime)>();
+
+    //            for (int i = 0; i < filesInteresected.Count(); i++)
+    //            {
+    //                anchors.Add(filesInteresected.ElementAt(i), ((float)anchors1.ElementAt(i), (float)anchors2.ElementAt(i)));
+    //            }
+
+    //            var predictionEngine = MakePipeline(anchors);
+
+    //            foreach (var unCalibratedFollowerSpecies in toCalibrate)
+    //            {
+    //                if (unCalibratedFollowerSpecies.Value.Count == 0)
+    //                    continue;
+
+    //                Calibrated prediction = predictionEngine.Predict(new PreCalibrated()
+    //                {
+    //                    Identifier = unCalibratedFollowerSpecies.Key,
+    //                    UnCalibratedRetentionTime = (float)unCalibratedFollowerSpecies.Value.First().Value
+    //                });
+    //                if (aligner.HarmonizedSpecies.Keys.Contains(unCalibratedFollowerSpecies.Key))
+    //                    aligner.HarmonizedSpecies[unCalibratedFollowerSpecies.Key].Add(file, prediction.CalibratedRetentionTime);
+    //                else
+    //                {
+    //                    aligner.HarmonizedSpecies.Add(unCalibratedFollowerSpecies.Key, new Dictionary<string, double>());
+    //                    aligner.HarmonizedSpecies[unCalibratedFollowerSpecies.Key].Add(file, prediction.CalibratedRetentionTime);
+    //                }
+    //            }
+    //        }
+    //    }
+
+    //    return aligner.HarmonizedSpecies;
+    //}
 
     public void Calibrate(int epochs = 1, int minimumAnchors = 2)
     {
@@ -95,7 +187,8 @@ public class RetentionTimeAligner
 
                 for (int i = 0; i < filesInteresected.Count(); i++)
                 {
-                    anchors.Add(filesInteresected.ElementAt(i), ((float)anchors1.ElementAt(i), (float)anchors2.ElementAt(i)));
+                    anchors.Add(filesInteresected.ElementAt(i),
+                        ((float)anchors1.ElementAt(i), (float)anchors2.ElementAt(i)));
                 }
 
                 var predictionEngine = MakePipeline(anchors);
@@ -121,6 +214,16 @@ public class RetentionTimeAligner
             }
         }
     }
+
+    //private RetentionTimeAligner DeepCopy()
+    //{
+    //    RetentionTimeAligner aligner = (RetentionTimeAligner)this.MemberwiseClone();
+    //    aligner.AllSpeciesInAllFiles = new List<IRetentionTimeAlignable>() { this.AllSpeciesInAllFiles };
+    //    aligner.FilesInHarmonizer = new Dictionary<string, List<IRetentionTimeAlignable>>() { { FilesInHarmonizer } };
+    //    aligner.HarmonizedSpecies = new Dictionary<string, Dictionary<string, double>>() { this.HarmonizedSpecies };
+
+    //    return aligner;
+    //}
 
     private PredictionEngine<PreCalibrated, Calibrated> MakePipeline(Dictionary<string, (float anchorRetentionTime, float retentionTime)> anchors)
     {

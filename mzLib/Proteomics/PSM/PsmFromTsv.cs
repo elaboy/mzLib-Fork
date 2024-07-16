@@ -45,11 +45,11 @@ namespace Proteomics.PSM
         public LocalizationLevel? GlycanLocalizationLevel { get; set; }
         public string LocalizedGlycan { get; set; }
 
-        //For Alignmer Class
-        public string FileName { get => FileNameWithoutExtension; set => FileName = FileNameWithoutExtension ; }
-        public double RetentionTime { get => RetentionTime ; set => RetentionTime = base.RetentionTime.Value; }
+        //For Aligner Interface
+        public string FileName { get => FileNameWithoutExtension; set => FileNameWithoutExtension = value ; }
+        double IRetentionTimeAlignable.RetentionTime { get => RetentionTime ?? -1 ; set => RetentionTime = value; }
 
-        public string Identifier => throw new NotImplementedException();
+        public string Identifier => FullSequence;
 
         public PsmFromTsv(string line, char[] split, Dictionary<string, int> parsedHeader)
         {

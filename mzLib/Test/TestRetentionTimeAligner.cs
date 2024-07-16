@@ -1,6 +1,12 @@
-﻿using MassSpectrometry;
+﻿using System;
+using MassSpectrometry;
 using NUnit.Framework;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using MathNet.Numerics.Statistics;
+using Proteomics.PSM;
+using Readers;
 
 namespace Test;
 internal class TestRetentionTimeAligner
@@ -12,78 +18,129 @@ internal class TestRetentionTimeAligner
         public string Identifier { get; set; }
     }
 
-    #region Generate Dummy Data
-    static TestRetentionTimeAlignable Example1 = new TestRetentionTimeAlignable()
-    {
-        FileName = "sumFile1.psmtsv",
-        Identifier = "sumPeptide1",
-        RetentionTime = 1
-    };
+    private static List<IRetentionTimeAlignable> DummyTestData;
+    private static int FilesInHarmonizerSize;
+    private static int AllSpeciesInAllFilesSize;
+    private static int HarmonizedSpeciesSize;
+    private static List<IRetentionTimeAlignable> PsmTestData;
 
-    static TestRetentionTimeAlignable Example1_copy = new TestRetentionTimeAlignable()
-    {
-        FileName = "sumFile1_copy.psmtsv",
-        Identifier = "sumPeptide1_copy",
-        RetentionTime = 1
-    };
 
-    static TestRetentionTimeAlignable Example2 = new TestRetentionTimeAlignable()
+    [OneTimeSetUp]
+    public static void OneTimeSetUp()
     {
-        FileName = "sumFile2.psmtsv",
-        Identifier = "sumPeptide2",
-        RetentionTime = 2
-    };
+        //string psmPath = Path.Combine(TestContext.CurrentContext.TestDirectory, @"AlignmentTestData\HundredPsmsA549AllPsms.psmtsv");
+        //PsmTestData = SpectrumMatchTsvReader.ReadPsmTsv(psmPath, out _)/*.Select(psm => (IRetentionTimeAlignable)psm)*/
+        //    .Cast<IRetentionTimeAlignable>().ToList();
 
-    static TestRetentionTimeAlignable Example3 = new TestRetentionTimeAlignable()
-    {
-        FileName = "sumFile3.psmtsv",
-        Identifier = "sumPeptide3",
-        RetentionTime = 3
-    };
 
-    static TestRetentionTimeAlignable Example4 = new TestRetentionTimeAlignable()
-    {
-        FileName = "sumFile4.psmtsv",
-        Identifier = "sumPeptide4",
-        RetentionTime = 4
-    };
+        DummyTestData = new List<IRetentionTimeAlignable>()
+        {
+            new TestRetentionTimeAlignable()
+            {
+                FileName = "file1",
+                Identifier = "peptide1",
+                RetentionTime = 1
+            },
+            new TestRetentionTimeAlignable()
+            {
+                FileName = "file2",
+                Identifier = "peptide1",
+                RetentionTime = 1
+            },
+            new TestRetentionTimeAlignable()
+            {
+                FileName = "file3",
+                Identifier = "peptide1",
+                RetentionTime = 1
+            },
+            new TestRetentionTimeAlignable()
+            {
+                FileName = "file2",
+                Identifier = "peptide2",
+                RetentionTime = 2
+            }
+        };
 
-    static TestRetentionTimeAlignable Example5 = new TestRetentionTimeAlignable()
-    {
-        FileName = "sumFile5.psmtsv",
-        Identifier = "sumPeptide5",
-        RetentionTime = 5
-    };
-
-    static TestRetentionTimeAlignable Example6 = new TestRetentionTimeAlignable()
-    {
-        FileName = "sumFile6.psmtsv",
-        Identifier = "sumPeptide6",
-        RetentionTime = 6
-    };
-
-    static TestRetentionTimeAlignable Example7 = new TestRetentionTimeAlignable()
-    {
-        FileName = "sumFile7.psmtsv",
-        Identifier = "sumPeptide7",
-        RetentionTime = 7
-    };
-
-    #endregion
+        FilesInHarmonizerSize = DummyTestData.DistinctBy(x => x.FileName).ToList().Count;
+        AllSpeciesInAllFilesSize = DummyTestData.Count;
+        HarmonizedSpeciesSize = DummyTestData.DistinctBy(x => x.Identifier).ToList().Count;
+    }
 
     [Test]
-    public void TestConstructor()
+    public void TestAlignerDummyData()
     {
-        List<IRetentionTimeAlignable> psms = new List<IRetentionTimeAlignable>();
-        psms.AddRange(new IRetentionTimeAlignable[]
-        {
-            Example1, Example2, Example3, Example4,
-            Example5, Example6, Example7
-        });
+        var testData = DummyTestData;
 
-        RetentionTimeAligner aligner = new RetentionTimeAligner(psms);
+        RetentionTimeAligner aligner = new RetentionTimeAligner(testData);
 
-        Assert.That(aligner.FilesInHarmonizer.Count == 7);
+        Assert.That(aligner.FilesInHarmonizer.Count == FilesInHarmonizerSize);
+        Assert.That(aligner.AllSpeciesInAllFiles.Count == AllSpeciesInAllFilesSize);
+        Assert.That(aligner.HarmonizedSpecies.Count == HarmonizedSpeciesSize);
     }
+
+    [Test]
+    public void TestAlignerEmptyData()
+    {
+        var emptyList = new List<IRetentionTimeAlignable>();
+        Assert.Throws<InvalidOperationException>(() => new RetentionTimeAligner(emptyList));
+    }
+
+    [Test]
+    public void TestCalibrate()
+    {
+
+    }
+
+    [Test]
+    public void TestExtensionMethods()
+    {
+        var testData = DummyTestData;
+
+        RetentionTimeAligner aligner = new RetentionTimeAligner(testData);
+
+        //Save dictionary
+        RetentionTimeAlignerExtensionMethods.SaveResults(aligner, "alignerDictionary.json");
+
+        //load aligner dictionary
+        Dictionary<string, Dictionary<string, double>> loadAligner = RetentionTimeAlignerExtensionMethods.LoadResults(
+            Path.Combine(
+                TestContext.CurrentContext.TestDirectory, "alignerDictionary.json"));
+
+        Assert.That(aligner.HarmonizedSpecies.Keys.Count.Equals(loadAligner.Keys.Count));
+
+        // Remove file from test directory
+        File.Delete(Path.Combine(TestContext.CurrentContext.TestDirectory, "alignerDictionary.json"));
+    }
+
+    //[Test]
+    //public void TestAlignerPsmData()
+    //{
+    //    var filterToAvoidDuplicates = PsmTestData.GroupBy(x => x.FileName).ToList();
+
+    //    List<IRetentionTimeAlignable> filteredPsms = new();
+
+    //    foreach (var file in filterToAvoidDuplicates)
+    //    {
+    //        var identifierGrouped = file.GroupBy(x => x.Identifier).ToList();
+    //        foreach (var sequence in identifierGrouped)
+    //        {
+    //            filteredPsms.Add(new TestRetentionTimeAlignable()
+    //            {
+    //                FileName = file.Key,
+    //                Identifier = sequence.Key,
+    //                RetentionTime = sequence.Select(x => x.RetentionTime).Mean()
+    //            });
+    //        }
+    //    }
+
+    //    RetentionTimeAligner aligner = new RetentionTimeAligner(filteredPsms);
+
+    //    Assert.That(aligner.FilesInHarmonizer.Count == FilesInHarmonizerSize);
+    //    Assert.That(aligner.AllSpeciesInAllFiles.Count == AllSpeciesInAllFilesSize);
+    //    Assert.That(aligner.HarmonizedSpecies.Count == HarmonizedSpeciesSize);
+
+    //    // Test the deep copy method
+
+    //}
 }
 
