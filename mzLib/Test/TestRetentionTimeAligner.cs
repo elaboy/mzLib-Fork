@@ -28,9 +28,11 @@ internal class TestRetentionTimeAligner
     [OneTimeSetUp]
     public static void OneTimeSetUp()
     {
-        //string psmPath = Path.Combine(TestContext.CurrentContext.TestDirectory, @"AlignmentTestData\HundredPsmsA549AllPsms.psmtsv");
-        //PsmTestData = SpectrumMatchTsvReader.ReadPsmTsv(psmPath, out _)/*.Select(psm => (IRetentionTimeAlignable)psm)*/
-        //    .Cast<IRetentionTimeAlignable>().ToList();
+        string psmPath = Path.Combine(TestContext.CurrentContext.TestDirectory, @"AlignmentTestData\549_subset.psmtsv");
+
+        PsmTestData = SpectrumMatchTsvReader.ReadPsmTsv(psmPath, out _)
+            //.Select(psm => (IRetentionTimeAlignable)psm).ToList();
+            .Cast<IRetentionTimeAlignable>().ToList();
 
 
         DummyTestData = new List<IRetentionTimeAlignable>()
@@ -112,35 +114,66 @@ internal class TestRetentionTimeAligner
         File.Delete(Path.Combine(TestContext.CurrentContext.TestDirectory, "alignerDictionary.json"));
     }
 
-    //[Test]
-    //public void TestAlignerPsmData()
-    //{
-    //    var filterToAvoidDuplicates = PsmTestData.GroupBy(x => x.FileName).ToList();
+    [Test]
+    public void TestAlignerPsmData()
+    {
+        var filterToAvoidDuplicates = PsmTestData.GroupBy(x => x.FileName).ToList();
 
-    //    List<IRetentionTimeAlignable> filteredPsms = new();
+        List<IRetentionTimeAlignable> filteredPsms = new();
 
-    //    foreach (var file in filterToAvoidDuplicates)
-    //    {
-    //        var identifierGrouped = file.GroupBy(x => x.Identifier).ToList();
-    //        foreach (var sequence in identifierGrouped)
-    //        {
-    //            filteredPsms.Add(new TestRetentionTimeAlignable()
-    //            {
-    //                FileName = file.Key,
-    //                Identifier = sequence.Key,
-    //                RetentionTime = sequence.Select(x => x.RetentionTime).Mean()
-    //            });
-    //        }
-    //    }
+        foreach (var file in filterToAvoidDuplicates)
+        {
+            var identifierGrouped = file.GroupBy(x => x.Identifier).ToList();
+            foreach (var sequence in identifierGrouped)
+            {
+                filteredPsms.Add(new TestRetentionTimeAlignable()
+                {
+                    FileName = file.Key,
+                    Identifier = sequence.Key,
+                    RetentionTime = sequence.Select(x => x.RetentionTime).Mean()
+                });
+            }
+        }
 
-    //    RetentionTimeAligner aligner = new RetentionTimeAligner(filteredPsms);
+        RetentionTimeAligner aligner = new RetentionTimeAligner(filteredPsms);
 
-    //    Assert.That(aligner.FilesInHarmonizer.Count == FilesInHarmonizerSize);
-    //    Assert.That(aligner.AllSpeciesInAllFiles.Count == AllSpeciesInAllFilesSize);
-    //    Assert.That(aligner.HarmonizedSpecies.Count == HarmonizedSpeciesSize);
+        Assert.That(aligner.FilesInHarmonizer.Count == 18);
+        Assert.That(aligner.AllSpeciesInAllFiles.Count == 75977);
+        Assert.That(aligner.HarmonizedSpecies.Count == 9304);
+    }
 
-    //    // Test the deep copy method
+    [Test]
+    public void TestAlignerPsmDataWithCalibration()
+    {
+        var filterToAvoidDuplicates = PsmTestData.GroupBy(x => x.FileName).ToList();
 
-    //}
+        List<IRetentionTimeAlignable> filteredPsms = new();
+
+        foreach (var file in filterToAvoidDuplicates)
+        {
+            var identifierGrouped = file.GroupBy(x => x.Identifier).ToList();
+            foreach (var sequence in identifierGrouped)
+            {
+                filteredPsms.Add(new TestRetentionTimeAlignable()
+                {
+                    FileName = file.Key,
+                    Identifier = sequence.Key,
+                    RetentionTime = sequence.Select(x => x.RetentionTime).Mean()
+                });
+            }
+        }
+
+        RetentionTimeAligner aligner = new RetentionTimeAligner(filteredPsms);
+
+        Assert.That(aligner.FilesInHarmonizer.Count == 18);
+        Assert.That(aligner.AllSpeciesInAllFiles.Count == 4306);
+        Assert.That(aligner.HarmonizedSpecies.Count == 1748);
+
+        aligner.Calibrate();
+
+        Assert.That(aligner.FilesInHarmonizer.Count == 18);
+        Assert.That(aligner.AllSpeciesInAllFiles.Count == 4306);
+        Assert.That(aligner.HarmonizedSpecies.Count == 1748);
+    }
 }
 

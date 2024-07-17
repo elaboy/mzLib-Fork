@@ -1,4 +1,6 @@
-﻿using MzLibUtil;
+﻿using System.Text;
+using Easy.Common.Extensions;
+using MzLibUtil;
 using Omics.SpectrumMatch;
 using Proteomics.PSM;
 
