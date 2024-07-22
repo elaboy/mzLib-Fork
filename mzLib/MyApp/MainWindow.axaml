@@ -1,0 +1,49 @@
+<Window
+    x:Class="MyApp.MainWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ScottPlot="clr-namespace:ScottPlot.Avalonia;assembly=ScottPlot.Avalonia"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="MyApp"
+    Width="800"
+    Height="900"
+    d:DesignHeight="800"
+    d:DesignWidth="900"
+    Background="White"
+    mc:Ignorable="d">
+
+    <Grid ColumnDefinitions="*, *" RowDefinitions="*, *">
+        <Grid
+            Grid.Row="0"
+            Grid.Column="0">
+
+            <Label>Files</Label>
+            <ScrollViewer Margin="10">
+                <StackPanel>
+                    <CheckBox Margin="10">FilesX</CheckBox>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <Grid
+            Grid.Row="1"
+            Grid.Column="0"
+            Background="LightGray" />
+
+        <Label Grid.Row="1" Grid.Column="0">Runners</Label>
+		<Grid
+            Grid.Row="0"
+            Grid.Column="1">
+			<Label>Graph</Label>
+			<ScottPlot:AvaPlot Margin="10" />
+		</Grid>
+
+		<Grid
+            Grid.Row="1"
+            Grid.Column="1">
+			<Label>Distribution</Label>
+			<ScottPlot:AvaPlot  Margin="10"/>
+		</Grid>
+    </Grid>
+</Window>
