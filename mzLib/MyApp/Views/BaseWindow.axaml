@@ -1,0 +1,47 @@
+<Window
+    x:Class="MyApp.Views.BaseWindow"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ScottPlot="clr-namespace:ScottPlot.Avalonia;assembly=ScottPlot.Avalonia"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewModels="clr-namespace:MyApp.ViewModels"
+    Title="MyApp"
+    Width="800"
+    Height="900"
+    d:DesignHeight="800"
+    d:DesignWidth="900"
+    x:DataType="viewModels:BaseWindowViewModel"
+    Background="White"
+    mc:Ignorable="d">
+
+	<Grid ColumnDefinitions="400, *" RowDefinitions="*, *">
+		<Grid Grid.Row="0" Grid.Column="0">
+
+			<!--<Label>Files</Label>-->
+            <Grid RowDefinitions="100, *">
+                <Button Grid.Row="0" Background="Orange"
+                        Click="OpenFileButton_Clicked">
+                    Browse Files
+                </Button>
+                <ListBox Grid.Row="1" x:Name="Files" SelectionMode="Multiple, Toggle"/>
+            </Grid>
+		</Grid>
+
+		<Grid
+            Grid.Row="1"
+            Grid.Column="0"
+            Background="LightGray" />
+
+		<Label Grid.Row="1" Grid.Column="0">Runners</Label>
+		<Grid Grid.Row="0" Grid.Column="1">
+			<Label>Graph</Label>
+			<ScottPlot:AvaPlot Margin="10" />
+		</Grid>
+
+		<Grid Grid.Row="1" Grid.Column="1">
+			<Label>Distribution</Label>
+			<ScottPlot:AvaPlot Margin="10" />
+		</Grid>
+	</Grid>
+</Window>

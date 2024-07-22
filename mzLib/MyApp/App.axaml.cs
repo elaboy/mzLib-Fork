@@ -3,7 +3,6 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 
 namespace MyApp;
-
 public partial class App : Application
 {
     public override void Initialize()
@@ -20,4 +19,6 @@ public partial class App : Application
 
         base.OnFrameworkInitializationCompleted();
     }
+
+
 }
