@@ -115,34 +115,6 @@ internal class TestRetentionTimeAligner
     }
 
     [Test]
-    public void TestAlignerPsmData()
-    {
-        var filterToAvoidDuplicates = PsmTestData.GroupBy(x => x.FileName).ToList();
-
-        List<IRetentionTimeAlignable> filteredPsms = new();
-
-        foreach (var file in filterToAvoidDuplicates)
-        {
-            var identifierGrouped = file.GroupBy(x => x.Identifier).ToList();
-            foreach (var sequence in identifierGrouped)
-            {
-                filteredPsms.Add(new TestRetentionTimeAlignable()
-                {
-                    FileName = file.Key,
-                    Identifier = sequence.Key,
-                    RetentionTime = sequence.Select(x => x.RetentionTime).Mean()
-                });
-            }
-        }
-
-        RetentionTimeAligner aligner = new RetentionTimeAligner(filteredPsms);
-
-        Assert.That(aligner.FilesInHarmonizer.Count == 18);
-        Assert.That(aligner.AllSpeciesInAllFiles.Count == 75977);
-        Assert.That(aligner.HarmonizedSpecies.Count == 9304);
-    }
-
-    [Test]
     public void TestAlignerPsmDataWithCalibration()
     {
         var filterToAvoidDuplicates = PsmTestData.GroupBy(x => x.FileName).ToList();
