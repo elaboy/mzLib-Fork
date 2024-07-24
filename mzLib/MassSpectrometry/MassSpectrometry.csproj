@@ -12,6 +12,8 @@
 
   <ItemGroup>
     <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
+    <PackageReference Include="Microsoft.ML" Version="3.0.1" />
+    <PackageReference Include="Microsoft.ML.Mkl.Components" Version="3.0.1" />
   </ItemGroup>
 
   <ItemGroup>
