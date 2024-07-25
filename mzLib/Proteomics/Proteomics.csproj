@@ -28,4 +28,9 @@
     <Folder Include="Fragmentation\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="TorchSharp" Version="0.102.7" />
+    <PackageReference Include="TorchSharp-cpu" Version="0.102.7" />
+  </ItemGroup>
+
 </Project>
