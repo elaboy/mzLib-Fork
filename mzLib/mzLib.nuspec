@@ -2,7 +2,7 @@
 <package>
   <metadata>
     <id>mzLib</id>
-    <version>1.6.000</version>
+    <version>1.6.008</version>
     <title>mzLib</title>
     <authors>Stef S.</authors>
     <owners>Stef S.</owners>
@@ -80,5 +80,8 @@
     <file src="UsefulProteomicsDatabases\bin\x64\Release\net6.0\UsefulProteomicsDatabases.dll" target="lib\net6.0-windows7.0" />
     <file src="Transcriptomics\bin\x64\Release\net6.0\Transcriptomics.dll" target="lib\net6.0-windows7.0" />
     <file src="Transcriptomics\bin\x64\Release\net6.0\Digestion\rnases.tsv" target="lib\net6.0-windows7.0" />
+	<!-- Adds the Chronologer Weights file to the nuget package -->
+	<file src="Proteomics\bin\x64\Release\net6.0\RetentionTimePrediction\Chronologer\Chronologer_20220601193755_TorchSharp.dat" target="lib\net6.0\RetentionTimePrediction\Chronologer"/>
+	<file src="Proteomics\bin\x64\Release\net6.0\RetentionTimePrediction\Chronologer\Chronologer_20220601193755_TorchSharp.dat" target="lib\net6.0-windows7.0\RetentionTimePrediction\Chronologer"/>
   </files>
 </package>

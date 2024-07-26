@@ -14,9 +14,11 @@ namespace Proteomics.ProteolyticDigestion
         static ProteaseDictionary()
         {
             var pathToProgramFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-            string dataDirectory = !String.IsNullOrWhiteSpace(pathToProgramFiles) && AppDomain.CurrentDomain.BaseDirectory.Contains(pathToProgramFiles)
-                    && !AppDomain.CurrentDomain.BaseDirectory.Contains("Jenkins") ?
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MetaMorpheus") :
+            string dataDirectory = !String.IsNullOrWhiteSpace(pathToProgramFiles) &&
+                                   AppDomain.CurrentDomain.BaseDirectory.Contains(pathToProgramFiles) && 
+                                   !AppDomain.CurrentDomain.BaseDirectory.Contains("Jenkins") ?
+                Path.Combine(Environment.GetFolderPath(
+                    Environment.SpecialFolder.LocalApplicationData), "MetaMorpheus") :
                 AppDomain.CurrentDomain.BaseDirectory;
 
             string path = Path.Combine(dataDirectory, "ProteolyticDigestion", "proteases.tsv");          
