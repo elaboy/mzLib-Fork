@@ -23,16 +23,18 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
     /// </summary>
     internal class Chronologer : torch.nn.Module<torch.Tensor, torch.Tensor>
     {
-        private static string pathToProgramFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+        //private static string pathToProgramFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
         
-        private static string dataDirectory = !String.IsNullOrWhiteSpace(pathToProgramFiles) &&
-                               AppDomain.CurrentDomain.BaseDirectory.Contains(pathToProgramFiles) &&
-                               !AppDomain.CurrentDomain.BaseDirectory.Contains("Jenkins") ?
-            Path.Combine(Environment.GetFolderPath(
-                Environment.SpecialFolder.LocalApplicationData), "MetaMorpheus") :
-            AppDomain.CurrentDomain.BaseDirectory;
+        //private static string dataDirectory = !String.IsNullOrWhiteSpace(pathToProgramFiles) &&
+        //                       AppDomain.CurrentDomain.BaseDirectory.Contains(pathToProgramFiles) &&
+        //                       !AppDomain.CurrentDomain.BaseDirectory.Contains("Jenkins") ?
+        //    Path.Combine(Environment.GetFolderPath(
+        //        Environment.SpecialFolder.LocalApplicationData), "MetaMorpheus") :
+        //    AppDomain.CurrentDomain.BaseDirectory;
 
-        private static string path = Path.Combine(dataDirectory, "RetentionTimePrediction", "Chronologer", "Chronologer_20220601193755_TorchSharp.dat");
+        private static string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+            "RetentionTimePrediction",
+            "Chronologer", "Chronologer_20220601193755_TorchSharp.dat");
         
         public Chronologer() : this(path)
         {
