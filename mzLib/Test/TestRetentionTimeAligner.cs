@@ -147,5 +147,45 @@ internal class TestRetentionTimeAligner
         Assert.That(aligner.AllSpeciesInAllFiles.Count == 4306);
         Assert.That(aligner.HarmonizedSpecies.Count == 1748);
     }
+
+    [Test]
+    public void GenerateA549Library()
+    {
+        string psmPathChronologer = @"E:\Analyzed\A549_Full_Chronologer_2\Task4SearchTask\AllPSMs.psmtsv";
+        string psmPathMetaMorpheus = @"E:\Analyzed\A549_MM_V1_0_5\Task4-SearchTask\AllPSMs.psmtsv";
+
+        var mmPsms = SpectrumMatchTsvReader.ReadPsmTsv(psmPathMetaMorpheus, out _)
+            .Cast<IRetentionTimeAlignable>().ToList();
+
+        var chronosPsms = SpectrumMatchTsvReader.ReadPsmTsv(psmPathChronologer, out _)
+            .Cast<IRetentionTimeAlignable>().ToList();
+
+        mmPsms.AddRange(chronosPsms);
+
+        var filterToAvoidDuplicates = mmPsms.GroupBy(x => x.FileName).ToList();
+
+        List<IRetentionTimeAlignable> filteredPsms = new();
+
+        foreach (var file in filterToAvoidDuplicates)
+        {
+            var identifierGrouped = file.GroupBy(x => x.Identifier).ToList();
+            foreach (var sequence in identifierGrouped)
+            {
+                filteredPsms.Add(new TestRetentionTimeAlignable()
+                {
+                    FileName = file.Key,
+                    Identifier = sequence.Key,
+                    RetentionTime = sequence.Select(x => x.RetentionTime).Mean()
+                });
+            }
+        }
+
+        RetentionTimeAligner aligner = new RetentionTimeAligner(filteredPsms);
+
+        aligner.Calibrate();
+
+        // save the library 
+        RetentionTimeAlignerExtensionMethods.SaveResults(aligner, @"E:\A549PsmLibrary.json");
+    }
 }
 

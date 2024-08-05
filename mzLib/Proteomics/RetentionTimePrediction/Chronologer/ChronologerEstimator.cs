@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 using TorchSharp;
@@ -42,7 +43,6 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
             var prediction = ChronologerModel.Predict(tensor);
             return prediction[0].ToDouble();
         }
-
         /// <summary>
         /// Takes the base sequence and the full peptide sequence and returns a tensor for the Chronologer model.
         /// The base sequence is the sequence without modifications and the full peptide sequence is the sequence with modifications.
