@@ -718,7 +718,8 @@ namespace Test
             }
         }
 
-        //Chronologer Tests
+        #region Chronologer Tests
+
         [Test]
         public void TestChronologerPredictions()
         {
@@ -758,6 +759,10 @@ namespace Test
             var uAminoAcid = ChronologerEstimator.PredictRetentionTime(testingData[6].Item1, testingData[6].Item2);
             Assert.That(uAminoAcid.HasValue == false);
 
+            var parallelPredictions = ChronologerEstimator.PredictHIBulk(testingData);
+            Assert.That(parallelPredictions.Count == 6);
+
         }
+        #endregion
     }
 }

@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
+using System.Threading.Tasks;
+using MathNet.Numerics;
+using Proteomics.PSM;
 using TorchSharp;
 
 namespace Proteomics.RetentionTimePrediction.Chronologer
@@ -43,6 +47,33 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
             var prediction = ChronologerModel.Predict(tensor);
             return prediction[0].ToDouble();
         }
+
+        public static List<double?> PredictHIBulk(List<(string baseSequence, string fullSequence)> baseSequenceFullSequenceList)
+        {
+            List<double?> hydrophobicIndexList = new List<double?>(new double?[baseSequenceFullSequenceList.Count]);
+
+            var result = Parallel.For(1, baseSequenceFullSequenceList.Count, (i, state) =>
+                {
+                    var tensor = Tensorize(baseSequenceFullSequenceList[i].baseSequence, baseSequenceFullSequenceList[i].fullSequence);
+
+                    if (tensor is null)
+                        hydrophobicIndexList[i] = null;
+                    else
+                        hydrophobicIndexList[i] = ChronologerModel.Predict(tensor)[0].ToDouble();
+                }
+            );
+
+            return hydrophobicIndexList;
+        }
+
+        public static double PredictHIFromBaseSequence(string baseSequence)
+        {
+            var tensor = TensorizeBaseSequence(baseSequence);
+
+            var prediction = ChronologerModel.Predict(tensor);
+            return prediction[0].ToDouble();
+        }
+
         /// <summary>
         /// Takes the base sequence and the full peptide sequence and returns a tensor for the Chronologer model.
         /// The base sequence is the sequence without modifications and the full peptide sequence is the sequence with modifications.
@@ -89,11 +120,11 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
                     //if mod, enter
                     if (nTerminalMod)
                     {
-                        if(subString.Contains("Acetyl"))
-                            tensor[0][0] = 39; 
+                        if (subString.Contains("Acetyl"))
+                            tensor[0][0] = 39;
                         else
                         {
-                            tensor[0][0] = 38; 
+                            tensor[0][0] = 38;
                         }
                         nTerminalMod = false; //next iteration is not a mod
                         continue;
@@ -121,9 +152,30 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
             }
 
             return null;
-
         }
 
+        private static torch.Tensor TensorizeBaseSequence(string baseSequence)
+        {
+            if (baseSequence.Length <= 50) //Chronologer only takes sequences of length 50 or less
+            {
+                var tensor = torch.zeros(1, 52, torch.ScalarType.Int64);
+
+                var tensorCounter = 1; //skips the first element which is the C-terminus in the tensor
+
+                tensor[0][0] = 38;
+                foreach (var subString in baseSequence)
+                {
+                    tensor[0][tensorCounter] = ChronologerDictionary[(subString, "")];
+                    tensorCounter++;
+                }
+
+                tensor[0][tensorCounter] = 44; //C-terminus
+
+                return tensor;
+            }
+
+            return null;
+        }
         private static readonly Dictionary<(char, string), int> ChronologerDictionary = new()
             {
                 { ('A', ""), 1 }, //'Alanine
