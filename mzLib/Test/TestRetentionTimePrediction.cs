@@ -5,7 +5,9 @@ using Proteomics.RetentionTimePrediction;
 using Proteomics.RetentionTimePrediction.Chronologer;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Omics.Modifications;
+using TopDownProteomics;
 using Stopwatch = System.Diagnostics.Stopwatch;
 
 namespace Test
@@ -758,6 +760,31 @@ namespace Test
 
             var uAminoAcid = ChronologerEstimator.PredictRetentionTime(testingData[6].Item1, testingData[6].Item2);
             Assert.That(uAminoAcid.HasValue == false);
+
+        }
+
+        [Test]
+        public void TestChronologerPredictions2()
+        {
+            var testingData = new List<(string, string)>()
+            {
+                ("GGSGGSHGGGSGFGGESGGSYGGGEEASGSGGGYGGGSGK", "GGSGGSHGGGSGFGGESGGSYGGGEEASGSGGGYGGGSGK"),
+                ("FASDDEHDEHDENGATGPVK", "FAS[Common Biological:Phosphorylation on S]DDEHDEHDENGATGPVK"),
+                ("AETLSGLGDSGAAGAAALSSASSETGTR", "[Common Biological:Acetylation on X]AETLSGLGDSGAAGAAALSSASSETGTR"),
+                ("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
+                ("ASASSSACSSDSDS", "ASASSSA[Unimod:Pyro-carbamidomethyl on C]CSSDSDS"),
+                ("GAGTGGLGLAVEGPSEAK", "GAGTGGLGLAVE[Metal:Sodium on E]GPSEAK"),
+                ("UUUUUUU", "UUUUUUU")
+            };
+
+            string[] testingDataBaseSequence = testingData.Select(x => x.Item1);
+            string[] testingDataFullSequence = testingData.Select(x => x.Item2);
+
+            var noMods =
+                ChronologerEstimator.PredictRetentionTime(testingDataBaseSequence, testingDataFullSequence);
+            Assert.That(noMods[3] == 0);
+            Assert.That(noMods[5] == 0);
+            Assert.That(noMods[6] == 0);
 
         }
     }

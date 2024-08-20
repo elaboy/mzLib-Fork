@@ -1,4 +1,5 @@
-﻿using Proteomics.PSM;
+﻿using System.Runtime.CompilerServices;
+using Proteomics.PSM;
 using Proteomics.RetentionTimePrediction.Chronologer;
 
 namespace Analyzer;
@@ -26,7 +27,12 @@ public class PlotFactory
 
             var psms = new Readers.PsmFromTsvFile(path);
             psms.LoadResults();
-            fileDictionary.Add(label, psms.Results.Where(x => x.AmbiguityLevel == "1").ToList());
+            fileDictionary.Add(label, psms.Results.Where(x => 
+                x.AmbiguityLevel == "1" & 
+                x.QValue <= 0.01 &
+                x.PEP <= 0.05 &
+                x.PEP_QValue <= 0.05)
+                .ToList());
         }
     }
     public static void Main(string[] args)
@@ -54,31 +60,41 @@ public class PlotFactory
                 }
 
                 //make directory 
-                var di = Directory.CreateDirectory(Path.Join(outputDirectory, "Chronologer"));
+                var di = Directory.CreateDirectory(Path.Join(outputDirectory, "ChronologerEstimator"));
 
                 // dump options file as json
 
 
                 // save to output directory
-                var filePath = Path.Join(outputDirectory, "Chronologer");
-                foreach (var file in fileDictionary)
-                {
-                    using (StreamWriter writer =
-                           new StreamWriter(new FileStream(filePath + file.Key + ".tsv", FileMode.Create, FileAccess.Write)))
-                    {
-                        writer.WriteLine("Base Sequence\tFull Sequence\tScan Retention Time\tChronologerHI");
-
-                        foreach (var psm in file.Value)
-                        {
-                            writer.WriteLine(psm.BaseSeq + "\t" +
-                                             psm.FullSequence + "\t" +
-                                             psm.RetentionTime + "\t" +
-                                             psm.ChronolgerHI);
-                        }
-                        writer.Close();
-                    }
-                }
+                var filePath = Path.Join(outputDirectory, "ChronologerEstimator");
+                Write(Path.Join(outputDirectory, "ChronologerEstimator"), filePath);
                 break;
+        }
+    }
+
+    private static void Write(string outputDirectory, string filePath)
+    {
+        foreach (var file in fileDictionary)
+        {
+            using (StreamWriter writer =
+                   new StreamWriter(new FileStream(filePath + file.Key + ".tsv", FileMode.Create, FileAccess.Write)))
+            {
+                writer.WriteLine("Base Sequence\tFull Sequence\tScan Retention Time\tChronologerHI\tAmbiguity Level\tQValue\tPEP_QValue\tPEP\tQValueNotch");
+
+                foreach (var psm in file.Value)
+                {
+                    writer.WriteLine(psm.BaseSeq + "\t" +
+                                     psm.FullSequence + "\t" +
+                                     psm.RetentionTime + "\t" +
+                                     psm.ChronolgerHI + "\t" +
+                                     psm.AmbiguityLevel + "\t" +
+                                     psm.QValue + "\t" +
+                                     psm.PEP_QValue + "\t" +
+                                     psm.PEP + "\t" +
+                                     psm.QValueNotch);
+                }
+                writer.Close();
+            }
         }
     }
 
