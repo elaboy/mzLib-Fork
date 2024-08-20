@@ -60,7 +60,7 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
         /// <returns></returns>
         public override torch.Tensor forward(torch.Tensor x)
         {
-            var input = seq_embed.forward(x).transpose(x.size(0), -1);
+            var input = seq_embed.forward(x).transpose(1, -1);
 
             var residual = input.clone();  //clones the tensor, later will be added to the input (residual connection)
             input = conv_layer_1.forward(input); //renet_block

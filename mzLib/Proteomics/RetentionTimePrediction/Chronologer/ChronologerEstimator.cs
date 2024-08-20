@@ -47,37 +47,32 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
             return prediction[0].ToDouble();
         }
 
-        public static double[] PredictRetentionTime(string[] baseSequence, string[] fullSequence)
+        public static float[] PredictRetentionTime(string[] baseSequences, string[] fullSequences)
         {
-            List<(Task<torch.Tensor>, bool)> tasksRunning = new List<(Task<torch.Tensor>, bool)>();
+            List<(Task<(torch.Tensor,bool)>, bool)> tasksRunning = new();
 
-            for (int i = 0; i < baseSequence.Length - 1; i++)
+            if (baseSequences.Length != fullSequences.Length)
+                return null; // mayber throw exception here?
+
+
+
+            var tensorizeTasks = new Task<float>[baseSequences.Length];
+            float[] predictions = new float[baseSequences.Length];
+
+            Parallel.For(0, baseSequences.Length, (i, state) =>
             {
-                Task<torch.Tensor> newTask = new Task<torch.Tensor>(() => Tensorize(baseSequence[i], fullSequence[i], out bool chronologerCompatible));
-                newTask.Start();
-                tasksRunning.Add(newTask);
-            }
+                var baseSeq = baseSequences[i];
+                var fullSeq = fullSequences[i];
 
-            tasksRunning.ForEach(task => task.Item1.Wait());
-            torch.Tensor tensor = torch.vstack(tasksRunning.Select(x => x.Item1.Wait()).ToList());
-            var prediction = ChronologerModel.Predict(tensor);
-
-            double[] predictions = prediction.data<double>().ToArray();
-
-            List<Task> tasksRunningPredictionClense = new List<Task>();
-
-            for (int i = 0; i < predictions.Length - 1; i++)
-            {
-                Task newTask = new Task(() =>
+                var (tensor, compatible) = Tensorize(baseSeq, fullSeq, out bool chronologerCompatible);
+                if (compatible)
                 {
-                    if (tasksRunning[i].Result.Item2 == false)
-                        predictions[i] = 0;
-                });
-                newTask.Start();
-                tasksRunningPredictionClense.Add(newTask);
-            }
-
-            tasksRunningPredictionClense.ForEach(task => task.Wait());
+                    var chronologerPrediction = ChronologerModel.Predict(tensor).data<float>().ToArray()[0];
+                    predictions[i] = chronologerPrediction;
+                }
+                else
+                    predictions[i] = -1;
+            });
 
             return predictions;
         }
@@ -90,13 +85,13 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
         /// <param name="baseSequence"></param>
         /// <param name="fullSequence"></param>
         /// <returns></returns>
-        private static torch.Tensor Tensorize(string baseSequence, string fullSequence, out bool chronologerCompatible)
+        private static (torch.Tensor, bool) Tensorize(string baseSequence, string fullSequence, out bool chronologerCompatible)
         {
             // Chronologer does not support metals
-            if (fullSequence.Contains("Metal") || baseSequence.Contains("U"))
+            if (fullSequence.Contains("Metal") || baseSequence.Contains("U") || baseSequence.Length > 50)
             {
                 chronologerCompatible = false;
-                return null;
+                return (torch.zeros(1, 52, torch.ScalarType.Int64), chronologerCompatible);
             }
 
             var fullSeq = fullSequence.Split(new[] { '[', ']' })
@@ -157,11 +152,11 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
                 tensor[0][tensorCounter] = 44; //C-terminus
 
                 chronologerCompatible = true;
-                return tensor;
+                return (tensor, chronologerCompatible);
             }
 
             chronologerCompatible = false;
-            return torch.zeros(1, 52, torch.ScalarType.Int64);
+            return (torch.zeros(1, 52, torch.ScalarType.Int64), chronologerCompatible);
 
         }
 
