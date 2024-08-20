@@ -53,14 +53,13 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
 
             for (int i = 0; i < baseSequence.Length - 1; i++)
             {
-                Task<(torch.Tensor, bool)> k = new Task<torch.Tensor>(() => Tensorize(baseSequence[i], fullSequence[i], out bool chronologerCompatible));
-                (Task<torch.Tensor>, bool) newTask = (new Task<torch.Tensor>, bool)(()  => Tensorize(baseSequence[i], fullSequence[i], out bool chronologerCompatible));
+                Task<torch.Tensor> newTask = new Task<torch.Tensor>(() => Tensorize(baseSequence[i], fullSequence[i], out bool chronologerCompatible));
                 newTask.Start();
                 tasksRunning.Add(newTask);
             }
 
-            tasksRunning.ForEach(task => task.Wait());
-            torch.Tensor tensor = torch.vstack(tasksRunning.Select(x => x.Result.Item1).ToList());
+            tasksRunning.ForEach(task => task.Item1.Wait());
+            torch.Tensor tensor = torch.vstack(tasksRunning.Select(x => x.Item1.Wait()).ToList());
             var prediction = ChronologerModel.Predict(tensor);
 
             double[] predictions = prediction.data<double>().ToArray();
