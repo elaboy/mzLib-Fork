@@ -44,6 +44,9 @@ namespace Proteomics.PSM
         public LocalizationLevel? GlycanLocalizationLevel { get; set; }
         public string LocalizedGlycan { get; set; }
 
+        // For Chronologer
+        public double? ChronolgerHI { get; set; }
+
         public PsmFromTsv(string line, char[] split, Dictionary<string, int> parsedHeader)
         {
             var spl = line.Split(split).Select(p => p.Trim('\"')).ToArray();
