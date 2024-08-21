@@ -72,6 +72,15 @@ public class PlotFactory
         }
     }
 
+    private static void IndividualFileCollector()
+    {
+        // Create a new directory to save the outputs
+        // Read all the individual files (the user withh provide only the search task so we need to move one more directory in)
+        // Gather all the data
+        // save the data in the directory, should be one tsv per file (18 files at the end according to the 11 mann files dataset)
+
+    }
+
     private static void Write(string outputDirectory, string filePath)
     {
         foreach (var file in fileDictionary)
