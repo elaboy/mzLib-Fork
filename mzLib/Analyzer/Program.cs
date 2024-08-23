@@ -1,6 +1,12 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Globalization;
+using System.Runtime.CompilerServices;
+using System.Xml;
+using CsvHelper;
+using CsvHelper.Configuration;
+using CsvHelper.Configuration.Attributes;
 using Proteomics.PSM;
 using Proteomics.RetentionTimePrediction.Chronologer;
+using Readers.QuantificationResults;
 
 namespace Analyzer;
 public class PlotFactory
@@ -15,6 +21,7 @@ public class PlotFactory
     private static Dictionary<string, List<PsmFromTsv>> fileDictionary { get; set; }
 
     private static string outputDirectory { get; set; }
+    public Dictionary<string, ExperimentalDesign> experimentalDesign { get; set; }
 
     public PlotFactory(string[] paths, string[] labels)
     {
@@ -72,11 +79,49 @@ public class PlotFactory
         }
     }
 
-    private static void IndividualFileCollector()
+    private static void IndividualFileCollector(string searchTaskDirectoryPath)
     {
+        var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+        {
+            Delimiter = "\t"
+        };
+
+        // load experimental design
+        List<ExperimentalDesign> experimentalDesign = new List<ExperimentalDesign>();
+        
+        using (var reader = new StreamReader(Path.Join(searchTaskDirectoryPath, "ExperimentalDesign.tsv")))
+        using (var tsv = new CsvReader(reader, config))
+        {
+            experimentalDesign.AddRange(tsv.GetRecords<ExperimentalDesign>().ToList());
+        }
+
+        string[] fileNames = experimentalDesign.Select(x => x.FileName.Replace(".mzML", "")).Distinct().ToArray();
+
+        string newDirectoryPath = Path.Join(outputDirectory, "IndividualFileCollector");
         // Create a new directory to save the outputs
+        DirectoryInfo di = Directory.CreateDirectory(newDirectoryPath);
         // Read all the individual files (the user withh provide only the search task so we need to move one more directory in)
+        string[] files = Directory.GetFiles(searchTaskDirectoryPath+"Individual File Results");
         // Gather all the data
+        Dictionary<string, (List<PsmFromTsv> peptides, List<PsmFromTsv> psms, List<QuantifiedPeak> quantifiedPeaks)>
+            allFilesData = new();
+        
+        foreach (var file in fileNames)
+        {
+            // peptides
+            var peptides = new Readers.PsmFromTsvFile(file+"_Peptides.psmtsv");
+            peptides.LoadResults();
+
+            // psms
+            var psms = new Readers.PsmFromTsvFile(file+"_PSMs.psmtsv");
+            psms.LoadResults();
+
+            // quantified peaks
+            var quantifiedPeaks = new QuantifiedPeakFile(file+"_QuantifiedPeaks.psmtsv");
+            quantifiedPeaks.LoadResults();
+
+            allFilesData.Add(file, (peptides.Results, psms.Results, quantifiedPeaks.Results));
+        }
         // save the data in the directory, should be one tsv per file (18 files at the end according to the 11 mann files dataset)
 
     }
@@ -153,5 +198,18 @@ public class PlotFactory
             psm.ChronolgerHI = ChronologerEstimator.PredictRetentionTime(psm.BaseSeq, psm.FullSequence);
         }
     }
+}
 
+public class ExperimentalDesign
+{
+    [Index(0)]
+    public string FileName { get; set; }
+    [Index(1)]
+    public int Condition { get; set; }
+    [Index(2)]
+    public int BioRep { get; set; }
+    [Index(3)]
+    public int Fraction { get; set; }
+    [Index(4)]
+    public int TechRep { get; set; }
 }
