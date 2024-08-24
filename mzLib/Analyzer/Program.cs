@@ -3,7 +3,8 @@ using System.Runtime.CompilerServices;
 using System.Xml;
 using CsvHelper;
 using CsvHelper.Configuration;
-using CsvHelper.Configuration.Attributes;
+using MassSpectrometry;
+using MathNet.Numerics.Statistics;
 using Proteomics.PSM;
 using Proteomics.RetentionTimePrediction.Chronologer;
 using Readers.QuantificationResults;
@@ -15,13 +16,16 @@ public class PlotFactory
     {
         { "--files", new List<string>() },
         {"--labels", new List<string>()},
-        {"--tasks", new List<string>()}
+        {"--tasks", new List<string>()},
+        {"--RTLib", new List<string>()}
     };
 
     private static Dictionary<string, List<PsmFromTsv>> fileDictionary { get; set; }
 
-    private static string outputDirectory { get; set; }
-    public Dictionary<string, ExperimentalDesign> experimentalDesign { get; set; }
+    public static string outputDirectory => @"E:\"; /*{ get; set; }*/
+    public Dictionary<string, ExperimentalDesign> ExperimentalDesign { get; set; }
+    public static List<IRetentionTimeAlignable> AlignablePsms { get; set; }
+    public Dictionary<string, Dictionary<string, double>> RetentionTimeLibrary { get; set; }
 
     public PlotFactory(string[] paths, string[] labels)
     {
@@ -34,25 +38,70 @@ public class PlotFactory
 
             var psms = new Readers.PsmFromTsvFile(path);
             psms.LoadResults();
+
             fileDictionary.Add(label, psms.Results.Where(x => 
                 x.AmbiguityLevel == "1" & 
                 x.QValue <= 0.01 &
                 x.PEP <= 0.05 &
-                x.PEP_QValue <= 0.05)
+                x.PEP_QValue <= 0.01)
                 .ToList());
         }
+    }
+
+    public PlotFactory(string[] paths)
+    {
+        List<IRetentionTimeAlignable>[] psmData = new List<IRetentionTimeAlignable>[paths.Length];
+        for(int i = 0; i < psmData.Length; i++)
+        {
+            new ParallelOptions() { MaxDegreeOfParallelism = 1 };
+            psmData[i] = new List<IRetentionTimeAlignable>();
+
+            //load the data
+            var psms = new Readers.PsmFromTsvFile(paths[i]);
+            psms.LoadResults();
+
+            psmData[i].AddRange(
+                psms.Results
+                    .Where(x => x.AmbiguityLevel == "1" &
+                                x.DecoyContamTarget == "T")
+                    .Cast<IRetentionTimeAlignable>().ToList());
+        }
+
+        var filteredPsmData = psmData.SelectMany(x => x.GroupBy(i => i.FileName)).ToList();
+        
+        var filteredPsms = new List<IRetentionTimeAlignable>();
+
+        foreach (var file in filteredPsmData)
+        {
+            var identifierGrouped = file.GroupBy(x => x.Identifier).ToList();
+
+            var toReplace = new List<IRetentionTimeAlignable>();
+            foreach (var sequence in identifierGrouped)
+            {
+                toReplace.AddRange(sequence.Select(x => x));
+            }
+
+            var toSendToFilteredPsm = toReplace[0];
+            toSendToFilteredPsm.RetentionTime = toReplace.Select(x => x.RetentionTime).Median();
+            filteredPsms.Add(toSendToFilteredPsm);
+        }
+
+        AlignablePsms = new List<IRetentionTimeAlignable>();
+        AlignablePsms.AddRange(filteredPsms);
     }
     public static void Main(string[] args)
     {
         CommandLineParser(args);
+
+
         var plotFactory = new PlotFactory(
-            options.First(x => x.Key == "--files").Value.ToArray(), 
-            options.First(x => x.Key == "--labels").Value.ToArray());
+            options.First(x => x.Key == "--files").Value.ToArray()); 
+            //options.First(x => x.Key == "--labels").Value.ToArray());
 
         Run(options.First(x => x.Key == "--tasks").Value.First());
     }
 
-    private static void Run(string task)
+    public static void Run(string task)
     {
         switch (task)
         {
@@ -71,10 +120,16 @@ public class PlotFactory
 
                 // dump options file as json
 
-
                 // save to output directory
                 var filePath = Path.Join(outputDirectory, "ChronologerEstimator");
                 Write(Path.Join(outputDirectory, "ChronologerEstimator"), filePath);
+                break;
+
+            // TODO
+            case "CreateRTLib":
+                RetentionTimeAligner aligner = new RetentionTimeAligner(AlignablePsms);
+                aligner.Calibrate();
+                RetentionTimeAlignerExtensionMethods.SaveResults(aligner, Path.Join(outputDirectory, "RTLib.json"));
                 break;
         }
     }
@@ -175,8 +230,11 @@ public class PlotFactory
                     case "--labels":
                         options[argument].Add(args[i]);
                         break;
-                    case "-o":
-                        outputDirectory = args[i];
+                    case "--RTLib":
+                        options[argument].Add(args[i]);
+                        break;
+                    //case "-o":
+                    //    outputDirectory = args[i];
                         break;
                     default:
                         Console.WriteLine("Argument error: this is not an option in the program. Revise your input.");
@@ -198,18 +256,4 @@ public class PlotFactory
             psm.ChronolgerHI = ChronologerEstimator.PredictRetentionTime(psm.BaseSeq, psm.FullSequence);
         }
     }
-}
-
-public class ExperimentalDesign
-{
-    [Index(0)]
-    public string FileName { get; set; }
-    [Index(1)]
-    public int Condition { get; set; }
-    [Index(2)]
-    public int BioRep { get; set; }
-    [Index(3)]
-    public int Fraction { get; set; }
-    [Index(4)]
-    public int TechRep { get; set; }
 }

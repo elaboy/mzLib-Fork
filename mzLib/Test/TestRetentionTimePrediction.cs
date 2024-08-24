@@ -815,7 +815,7 @@ namespace Test
         {
             var allPsms =
                 new Readers.SpectrumMatchFromTsvFile(
-                    @"E:\Analyzed\A549_Full_Chronologer_2\Task4SearchTask\AllPSMs.psmtsv");
+                    @"S:\Analyzed\A549_Full_Chronologer_2\Task4SearchTask\AllPSMs.psmtsv");
             allPsms.LoadResults();
 
             var psms = allPsms.Where(x => x.AmbiguityLevel == "1" & x.DecoyContamTarget == "T").ToList();

@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using MassSpectrometry;
 using Omics.Fragmentation;
 using Omics.SpectrumMatch;
 
 namespace Proteomics.PSM
 {
-    public class PsmFromTsv : SpectrumMatchFromTsv
+    public class PsmFromTsv : SpectrumMatchFromTsv, IRetentionTimeAlignable
     {
 
         public string ProteinAccession => Accession;
@@ -46,6 +47,11 @@ namespace Proteomics.PSM
 
         // For Chronologer
         public double? ChronolgerHI { get; set; }
+
+        //For Aligner Interface
+        public string FileName { get => FileNameWithoutExtension; set => FileNameWithoutExtension = value; }
+        double IRetentionTimeAlignable.RetentionTime { get => RetentionTime ?? -1; set => RetentionTime = value; }
+        public string Identifier => FullSequence;
 
         public PsmFromTsv(string line, char[] split, Dictionary<string, int> parsedHeader)
         {
