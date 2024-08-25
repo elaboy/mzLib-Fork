@@ -50,7 +50,7 @@ namespace Proteomics.PSM
 
         //For Aligner Interface
         public string FileName { get => FileNameWithoutExtension; set => FileNameWithoutExtension = value; }
-        double IRetentionTimeAlignable.RetentionTime { get => RetentionTime ?? -1; set => RetentionTime = value; }
+        float IRetentionTimeAlignable.RetentionTime { get => (float?)RetentionTime.Value ?? -1; set => RetentionTime = value; }
         public string Identifier => FullSequence;
 
         public PsmFromTsv(string line, char[] split, Dictionary<string, int> parsedHeader)

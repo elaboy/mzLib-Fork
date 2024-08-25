@@ -51,9 +51,8 @@ public class PlotFactory
     public PlotFactory(string[] paths)
     {
         List<IRetentionTimeAlignable>[] psmData = new List<IRetentionTimeAlignable>[paths.Length];
-        for(int i = 0; i < psmData.Length; i++)
+        Parallel.For(0, psmData.Length, i=>
         {
-            new ParallelOptions() { MaxDegreeOfParallelism = 1 };
             psmData[i] = new List<IRetentionTimeAlignable>();
 
             //load the data
@@ -65,7 +64,7 @@ public class PlotFactory
                     .Where(x => x.AmbiguityLevel == "1" &
                                 x.DecoyContamTarget == "T")
                     .Cast<IRetentionTimeAlignable>().ToList());
-        }
+        });
 
         var filteredPsmData = psmData.SelectMany(x => x.GroupBy(i => i.FileName)).ToList();
         

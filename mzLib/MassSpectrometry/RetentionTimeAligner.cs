@@ -13,7 +13,7 @@ public class RetentionTimeAligner
 
     public Dictionary<string, List<IRetentionTimeAlignable>> FilesInHarmonizer = new();
 
-    public Dictionary<string, Dictionary<string, double>> HarmonizedSpecies = new();
+    public Dictionary<string, Dictionary<string, float>> HarmonizedSpecies = new();
 
     public RetentionTimeAligner() { }
 
@@ -42,11 +42,11 @@ public class RetentionTimeAligner
         foreach (var identifier in firstLeader.Value)
         {
             if (HarmonizedSpecies.ContainsKey(identifier.Identifier))
-                HarmonizedSpecies[identifier.Identifier].Add(firstLeader.Key, identifier.RetentionTime);
+                HarmonizedSpecies[identifier.Identifier].Add(firstLeader.Key, (float)identifier.RetentionTime);
             else
             {
-                HarmonizedSpecies.Add(identifier.Identifier, new Dictionary<string, double>());
-                HarmonizedSpecies[identifier.Identifier].Add(firstLeader.Key, identifier.RetentionTime);
+                HarmonizedSpecies.Add(identifier.Identifier, new Dictionary<string, float>());
+                HarmonizedSpecies[identifier.Identifier].Add(firstLeader.Key, (float)identifier.RetentionTime);
             }
         }
 
@@ -207,7 +207,7 @@ public class RetentionTimeAligner
                         HarmonizedSpecies[unCalibratedFollowerSpecies.Key].Add(file, prediction.CalibratedRetentionTime);
                     else
                     {
-                        HarmonizedSpecies.Add(unCalibratedFollowerSpecies.Key, new Dictionary<string, double>());
+                        HarmonizedSpecies.Add(unCalibratedFollowerSpecies.Key, new Dictionary<string, float>());
                         HarmonizedSpecies[unCalibratedFollowerSpecies.Key].Add(file, prediction.CalibratedRetentionTime);
                     }
                 }
@@ -300,7 +300,7 @@ public class RetentionTimeAligner
                     prediction.CalibratedRetentionTime);
             else
             {
-                HarmonizedSpecies.Add(unCalibratedFollowerSpecies.Identifier, new Dictionary<string, double>());
+                HarmonizedSpecies.Add(unCalibratedFollowerSpecies.Identifier, new Dictionary<string, float>());
                 HarmonizedSpecies[unCalibratedFollowerSpecies.Identifier].Add(unCalibratedFollowerSpecies.FileName,
                     prediction.CalibratedRetentionTime);
             }
