@@ -65,16 +65,18 @@ public class RtLib
 
         for (int i = 0; i < ResultsPath.Count; i++)
         {
-            dataLoader[i] = (Task<List<IRetentionTimeAlignable>>)LoadFileResultsAsync(ResultsPath[i]);
-            dataLoader[i].Start();
+            dataLoader[i] = LoadFileResultsAsync(ResultsPath[i]);
         }
+        dataLoader[0].Start();
 
-        foreach (var task in dataLoader)
+        for(int i = 0; i < ResultsPath.Count; i++) 
         {
-            task.Wait();
-            var fullSequences = task.Result.GroupBy(x => x.Identifier);
+            dataLoader[i].Wait();
+            var fullSequences = dataLoader[i].Result.GroupBy(x => x.Identifier);
             if (Results.Count > 0)
             {
+                List<IRetentionTimeAlignable> newSpecies = new();
+
                 foreach (var fullSequence in fullSequences)
                 {
                     if (!Results.ContainsKey(fullSequence.Key))
@@ -84,14 +86,29 @@ public class RtLib
                     }
                     else if (Results.ContainsKey(fullSequence.Key))
                     {
-                        Results[fullSequence.Key].AddRange(fullSequence.Select(x => x.RetentionTime));
+                        foreach (var species in fullSequence)
+                        {
+                            newSpecies.Add(species);
+                        }
                     }
                 }
                 // Calibrate
+                Aligner aligner = new Aligner(Results, newSpecies);
+                // Start next loading task
+                if (i < ResultsPath.Count - 1)
+                {
+                    dataLoader[i+1].Start();
+                }
+                aligner.Align();
 
+                Results = aligner.GetResults();
             }
             else
             {
+                if (i < ResultsPath.Count - 1)
+                {
+                    dataLoader[i + 1].Start();
+                }
                 // all gets inserted, it's the first file
                 foreach (var fullSequence in fullSequences)
                 {
@@ -99,6 +116,8 @@ public class RtLib
                     Results[fullSequence.Key].AddRange(fullSequence.Select(x => x.RetentionTime));
                 }
             }
+
+            dataLoader[i].Result.Clear();
         }
     }
 
@@ -113,10 +132,10 @@ public class RtLib
             .ToList();
     }
 
-    public async Task LoadFileResultsAsync(string path)
+    public Task<List<IRetentionTimeAlignable>> LoadFileResultsAsync(string path)
     {
         var results = new Task<List<IRetentionTimeAlignable>>(() => LoadFileResults(path));
-        await results;
+        return results;
     }
 
     public void Write()
@@ -187,6 +206,8 @@ public class Aligner : IDisposable
 
         List<PreCalibrated> PreCalibratedList = new();
 
+        // need to separate the anchors from the novel species to the library, the next loop crashes. Need to bring the Intersects lines from previos code iteration (it worked)
+        var anchors = alignedSpecies.Where(x => x.Value.Count > 1 & speciesToAlign.Contains(x.Key));
         // Prepare the data for the dataview
         foreach (var anchor in alignedSpecies.Where(x => x.Value.Count > 1))
         {
