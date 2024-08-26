@@ -243,10 +243,8 @@ public class PlotFactory
         }
     }
 
-    private static double? GetChronologerHI(PsmFromTsv psm)
-    {
-        return ChronologerEstimator.PredictRetentionTime(psm.BaseSeq, psm.FullSequence);
-    }
+    private static double? GetChronologerHI(PsmFromTsv psm) => 
+        ChronologerEstimator.PredictRetentionTime(psm.BaseSeq, psm.FullSequence); 
 
     private static void ChronologerHI(List<PsmFromTsv> psms)
     {

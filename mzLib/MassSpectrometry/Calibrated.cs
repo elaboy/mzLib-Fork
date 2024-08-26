@@ -1,7 +1,7 @@
 ﻿using Microsoft.ML.Data;
 
 namespace MassSpectrometry;
-internal class Calibrated
+public class Calibrated
 {
     [ColumnName("Score")]
     public float CalibratedRetentionTime { get; set; }
