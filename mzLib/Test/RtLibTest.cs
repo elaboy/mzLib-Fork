@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration.Internal;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CsvHelper;
 using NUnit.Framework;
 using RTLib;
 
@@ -25,9 +29,33 @@ public class RtLibTest
             @"E:\Datasets\Mann_11cell_lines\MCF7\2024-07-23-11-46-09_BigSearch\Task4-SearchTask\AllPSMs.psmtsv",
             @"E:\Datasets\Mann_11cell_lines\RKO\2024-07-23-11-49-07_BigSearch\Task4-SearchTask\AllPSMs.psmtsv",
             @"E:\Datasets\Mann_11cell_lines\U2OS\2024-07-23-11-51-33_BigSearch\Task4-SearchTask\AllPSMs.psmtsv"
-        }, @"E:\");
+        }, @"E:\rtLib2.json");
 
         int zero = 0;
+    }
+
+    [Test]
+    public void TestLoadingRtLib()
+    {
+        RtLib loadedRtLib = new RtLib(@"E:\rtLib2.json");
+
+        // spit all full sequences into a tsv with the last rt in each list
+        using(var writer = new StreamWriter(@"E:\rtLib2.csv"))
+        using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+        {
+            List<string> header = new List<string>();
+            header.Add("FullSequence");
+            header.Add("CalibratedRetentionTime");
+            foreach (var kvp in loadedRtLib.Results)
+            {
+                List<string> record = new List<string>();
+                record.Add(kvp.Key);
+                record.Add(kvp.Value.Last().ToString());
+
+                csv.WriteField(record);
+                csv.NextRecord();
+            }
+        }
     }
 }
 

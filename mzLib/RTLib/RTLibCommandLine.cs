@@ -1,4 +1,7 @@
-﻿using System.Reflection.Metadata.Ecma335;
+﻿using System.Diagnostics;
+using System.IO;
+using System.Reflection.Metadata.Ecma335;
+using System.Text.Json;
 using MassSpectrometry;
 using MathNet.Numerics.Statistics;
 using Microsoft.ML;
@@ -55,6 +58,11 @@ public class RtLib
     private string OutputPath { get;}
     public Dictionary<string, List<float>> Results { get; }
 
+    public RtLib(string rtLibPath)
+    {
+        Results = Load(rtLibPath);
+    }
+
     public RtLib(List<string> resultsPath, string outputPath)
     {
         ResultsPath = resultsPath;
@@ -102,6 +110,7 @@ public class RtLib
                 aligner.Align();
 
                 Results = aligner.GetResults();
+                aligner.Dispose();
             }
             else
             {
@@ -116,9 +125,10 @@ public class RtLib
                     Results[fullSequence.Key].AddRange(fullSequence.Select(x => x.RetentionTime));
                 }
             }
-
-            dataLoader[i].Result.Clear();
+            Debug.WriteLine($"file: {i} of {Results.Count}");
+            //dataLoader[i].Result.Clear();
         }
+        Write();
     }
 
     public List<IRetentionTimeAlignable> LoadFileResults(string path)
@@ -140,12 +150,16 @@ public class RtLib
 
     public void Write()
     {
-        throw new NotImplementedException();
+        string jsonString = JsonSerializer.Serialize(Results);
+
+        File.WriteAllText(OutputPath, jsonString);
     }
 
-    public void Load()
+    public static Dictionary<string, List<float>> Load(string rtLibPath)
     {
-        throw new NotImplementedException();
+        string jsonString = File.ReadAllText(rtLibPath);
+        var aligner = JsonSerializer.Deserialize<Dictionary<string, List<float>>>(jsonString);
+        return aligner;
     }
     public List<string> GetFilePaths() => ResultsPath;
     public string GetOutputPath() => OutputPath;
@@ -169,7 +183,7 @@ public class Aligner : IDisposable
         // new inserts
         foreach (var species in speciesToAlign)
         {
-            if (alignedSpecies.ContainsKey(species.Identifier))
+            if (alignedSpecies.ContainsKey(species.Identifier) & alignedSpecies[species.Identifier].Count > 1)
             {
                 alignedSpecies[species.Identifier].Add(species.RetentionTime);
             }
@@ -195,9 +209,17 @@ public class Aligner : IDisposable
         // add them into the alignedSpecies
         foreach (var predictions in calibrated)
         {
-            alignedSpecies.Add(predictions.Item1,
-                new List<float>(){predictions.Item2.CalibratedRetentionTime});
+            if (alignedSpecies.ContainsKey(predictions.Item1))
+            {
+                alignedSpecies[predictions.Item1].Add(predictions.Item2.CalibratedRetentionTime);
+            }
+            else
+            {
+                alignedSpecies.Add(predictions.Item1,
+                    new List<float>() { predictions.Item2.CalibratedRetentionTime });
+            }
         }
+        Dispose();
     }
 
     private PredictionEngine<PreCalibrated, Calibrated> GetPredictionEngine()
@@ -207,15 +229,17 @@ public class Aligner : IDisposable
         List<PreCalibrated> PreCalibratedList = new();
 
         // need to separate the anchors from the novel species to the library, the next loop crashes. Need to bring the Intersects lines from previos code iteration (it worked)
-        var anchors = alignedSpecies.Where(x => x.Value.Count > 1 & speciesToAlign.Contains(x.Key));
+        // get anchor available
+        var anchorsBetweenBothSets = speciesToAlign.Where(x => alignedSpecies.ContainsKey(x.Identifier)).DistinctBy(x => x.Identifier);
+
         // Prepare the data for the dataview
-        foreach (var anchor in alignedSpecies.Where(x => x.Value.Count > 1))
+        foreach (var anchor in anchorsBetweenBothSets)
         {
             PreCalibratedList.Add(new PreCalibrated()
             {
-                Identifier = anchor.Key,
-                AnchorRetentionTime = (float)anchor.Value.Select(x => x).Median(),
-                UnCalibratedRetentionTime = (float)speciesToAlign.First(x => x.Identifier == anchor.Key).RetentionTime
+                Identifier = anchor.Identifier,
+                AnchorRetentionTime = alignedSpecies[anchor.Identifier].Select(x => x).Median(),
+                UnCalibratedRetentionTime = anchor.RetentionTime
             });
         }
 
@@ -243,6 +267,7 @@ public class Aligner : IDisposable
 
     public void Dispose()
     {
-        throw new NotImplementedException();
+        alignedSpecies.Clear();
+        speciesToAlign.Clear();
     }
 }
