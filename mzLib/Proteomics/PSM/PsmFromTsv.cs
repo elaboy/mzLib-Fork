@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using MassSpectrometry;
 using Omics.Fragmentation;
 using Omics.SpectrumMatch;
@@ -46,12 +47,21 @@ namespace Proteomics.PSM
         public string LocalizedGlycan { get; set; }
 
         // For Chronologer
-        public double? ChronolgerHI { get; set; }
+        public double? ChronologerHIDouble { get; set; }
 
         //For Aligner Interface
         public string FileName { get => FileNameWithoutExtension; set => FileNameWithoutExtension = value; }
-        float IRetentionTimeAlignable.RetentionTime { get => (float?)RetentionTime.Value ?? -1; set => RetentionTime = value; }
-        public string Identifier => FullSequence;
+        float IRetentionTimeAlignable.RetentionTime { get => (float?)RetentionTime.Value ?? -1; set => RetentionTime = value; } 
+        float IRetentionTimeAlignable.ChronologerHI { get => (float)ChronologerHIDouble; set => SetChronologerHI(value); }
+
+        public float SetChronologerHI(double? chronologerHI) => (float)chronologerHI.Value;
+        public string BaseSequence { get => BaseSeq; set => SetBaseSequence(); }
+        public string SetBaseSequence() => BaseSeq;
+        string IRetentionTimeAlignable.FullSequence { get => FullSequence; set => SetFullSequence(); }
+        public string SetFullSequence() => FullSequence;
+        string FullSequence => base.FullSequence;
+
+
 
         public PsmFromTsv(string line, char[] split, Dictionary<string, int> parsedHeader)
         {
@@ -89,7 +99,7 @@ namespace Proteomics.PSM
             PrecursorMz = double.Parse(spl[parsedHeader[SpectrumMatchFromTsvHeader.PrecursorMz]].Trim(), CultureInfo.InvariantCulture);
             PrecursorMass = double.Parse(spl[parsedHeader[SpectrumMatchFromTsvHeader.PrecursorMass]].Trim(), CultureInfo.InvariantCulture);
             BaseSeq = RemoveParentheses(spl[parsedHeader[SpectrumMatchFromTsvHeader.BaseSequence]].Trim());
-            FullSequence = spl[parsedHeader[SpectrumMatchFromTsvHeader.FullSequence]];
+            base.FullSequence = spl[parsedHeader[SpectrumMatchFromTsvHeader.FullSequence]];
             MonoisotopicMass = spl[parsedHeader[SpectrumMatchFromTsvHeader.MonoisotopicMass]].Trim();
             Score = double.Parse(spl[parsedHeader[SpectrumMatchFromTsvHeader.Score]].Trim(), CultureInfo.InvariantCulture);
             DecoyContamTarget = spl[parsedHeader[SpectrumMatchFromTsvHeader.DecoyContaminantTarget]].Trim();
@@ -183,9 +193,9 @@ namespace Proteomics.PSM
         public PsmFromTsv(PsmFromTsv psm, string fullSequence, int index = 0, string baseSequence = "")
         {
             // psm is not ambiguous
-            if (!psm.FullSequence.Contains("|"))
+            if (!((SpectrumMatchFromTsv)psm).FullSequence.Contains("|"))
             {
-                FullSequence = fullSequence;
+                base.FullSequence = fullSequence;
                 EssentialSeq = psm.EssentialSeq;
                 BaseSeq = baseSequence == "" ? psm.BaseSeq : baseSequence;
                 StartAndEndResiduesInParentSequence = psm.StartAndEndResiduesInProtein;
@@ -199,7 +209,7 @@ namespace Proteomics.PSM
             // potentially ambiguous fields
             else
             {
-                FullSequence = fullSequence;
+                base.FullSequence = fullSequence;
                 EssentialSeq = psm.EssentialSeq.Split("|")[index];
                 BaseSeq = baseSequence == "" ? psm.BaseSeq.Split("|")[index] : baseSequence;
                 StartAndEndResiduesInParentSequence = psm.StartAndEndResiduesInProtein.Split("|")[index];

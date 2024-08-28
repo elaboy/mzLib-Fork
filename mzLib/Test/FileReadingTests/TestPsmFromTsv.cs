@@ -35,7 +35,7 @@ namespace Test.FileReadingTests
             Assert.That(psmFilePsms.Count, Is.EqualTo(parsedPsms.Count));
             for (int i = 0; i < parsedPsms.Count; i++)
             {
-                Assert.That(parsedPsms[i].FullSequence, Is.EqualTo(psmFilePsms[i].FullSequence));
+                Assert.That(((SpectrumMatchFromTsv)parsedPsms[i]).FullSequence, Is.EqualTo(((SpectrumMatchFromTsv)psmFilePsms[i]).FullSequence));
             }
 
 
@@ -47,7 +47,7 @@ namespace Test.FileReadingTests
                 PsmFromTsv casted = spectralMatchFilePsms[i] as PsmFromTsv;
                 if (casted == null) Assert.Fail();
 
-                Assert.That(parsedPsms[i].FullSequence, Is.EqualTo(spectralMatchFilePsms[i].FullSequence));
+                Assert.That(((SpectrumMatchFromTsv)parsedPsms[i]).FullSequence, Is.EqualTo(spectralMatchFilePsms[i].FullSequence));
             }
         }
 
@@ -99,21 +99,21 @@ namespace Test.FileReadingTests
             PsmFromTsv psm = psms.First();
 
             // non ambiguous construction should not be successful
-            string fullSeq = psm.FullSequence;
+            string fullSeq = ((SpectrumMatchFromTsv)psm).FullSequence;
             fullSeq = fullSeq.Substring(0, fullSeq.Length - 1);
             PsmFromTsv modifiedPsm = new(psm, fullSeq);
-            Assert.That(modifiedPsm.FullSequence == fullSeq);
+            Assert.That(((SpectrumMatchFromTsv)modifiedPsm).FullSequence == fullSeq);
 
             // disambiguation construction
-            var ambiguousPsms = psms.Where(p => p.FullSequence.Contains('|'));
+            var ambiguousPsms = psms.Where(p => ((SpectrumMatchFromTsv)p).FullSequence.Contains('|'));
             PsmFromTsv ambiguousPsm = ambiguousPsms.First();
-            var fullSeqStrings = ambiguousPsm.FullSequence.Split('|');
+            var fullSeqStrings = ((SpectrumMatchFromTsv)ambiguousPsm).FullSequence.Split('|');
 
             PsmFromTsv modifiedAmbiguousPsm = new(ambiguousPsm, fullSeqStrings[0]);
             List<string[]> test = new();
             foreach (var ambPsm in ambiguousPsms)
             {
-                PsmFromTsv disambiguatedPSM = new(ambPsm, ambPsm.FullSequence.Split("|")[0]);
+                PsmFromTsv disambiguatedPSM = new(ambPsm, ((SpectrumMatchFromTsv)ambPsm).FullSequence.Split("|")[0]);
                 Assert.That(disambiguatedPSM.StartAndEndResiduesInProtein == ambPsm.StartAndEndResiduesInProtein.Split("|")[0]);
                 Assert.That(disambiguatedPSM.BaseSeq == ambPsm.BaseSeq.Split("|")[0]);
                 Assert.That(disambiguatedPSM.EssentialSeq == ambPsm.EssentialSeq.Split("|")[0]);
@@ -133,7 +133,7 @@ namespace Test.FileReadingTests
                 {
                     for (int i = 1; i < ambPsm.StartAndEndResiduesInProtein.Split("|").Count(); i++)
                     {
-                        disambiguatedPSM = new(ambPsm, ambPsm.FullSequence.Split("|")[i], i);
+                        disambiguatedPSM = new(ambPsm, ((SpectrumMatchFromTsv)ambPsm).FullSequence.Split("|")[i], i);
                         Assert.That(disambiguatedPSM.StartAndEndResiduesInProtein == ambPsm.StartAndEndResiduesInProtein.Split("|")[i]);
                         Assert.That(disambiguatedPSM.BaseSeq == ambPsm.BaseSeq.Split("|")[i]);
                         Assert.That(disambiguatedPSM.EssentialSeq == ambPsm.EssentialSeq.Split("|")[i]);
@@ -170,14 +170,14 @@ namespace Test.FileReadingTests
 
             // psm with single modificaiton
             PsmFromTsv singleMod = psms[0];
-            var modDict = Omics.SpectrumMatch.SpectrumMatchFromTsv.ParseModifications(singleMod.FullSequence);
+            var modDict = Omics.SpectrumMatch.SpectrumMatchFromTsv.ParseModifications(((SpectrumMatchFromTsv)singleMod).FullSequence);
             Assert.That(modDict.Count == 1);
             Assert.That(modDict.ContainsKey(37));
             Assert.That(modDict.Values.First().Contains("Common Fixed:Carbamidomethyl on C"));
 
             // psm with two modifications
             PsmFromTsv twoMods = psms[15];
-            modDict = Omics.SpectrumMatch.SpectrumMatchFromTsv.ParseModifications(twoMods.FullSequence);
+            modDict = Omics.SpectrumMatch.SpectrumMatchFromTsv.ParseModifications(((SpectrumMatchFromTsv)twoMods).FullSequence);
             Assert.That(modDict.Count == 2);
             Assert.That(modDict.ContainsKey(0) && modDict.ContainsKey(104));
             Assert.That(modDict[0].Count == 1);
@@ -233,9 +233,9 @@ namespace Test.FileReadingTests
             Assert.AreEqual("Could not read line: 2", warnings[0]);
             Assert.AreEqual("Warning: 1 PSMs were not read.", warnings[1]);
 
-            Assert.That(psms[0].FullSequence.Equals(psms[0].ToString()));
-            Assert.That(psms[1].FullSequence.Equals(psms[1].ToString()));
-            Assert.That(psms[2].FullSequence.Equals(psms[2].ToString()));
+            Assert.That(((SpectrumMatchFromTsv)psms[0]).FullSequence.Equals(psms[0].ToString()));
+            Assert.That(((SpectrumMatchFromTsv)psms[1]).FullSequence.Equals(psms[1].ToString()));
+            Assert.That(((SpectrumMatchFromTsv)psms[2]).FullSequence.Equals(psms[2].ToString()));
         }
 
         [Test]

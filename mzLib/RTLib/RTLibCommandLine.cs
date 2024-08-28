@@ -2,10 +2,13 @@
 using System.IO;
 using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
+using Easy.Common.Extensions;
 using MassSpectrometry;
 using MathNet.Numerics.Statistics;
 using Microsoft.ML;
 using Nett;
+using Proteomics.RetentionTimePrediction.Chronologer;
+using TorchSharp;
 
 namespace RTLib;
 public class RtLibCommandLine
@@ -14,7 +17,7 @@ public class RtLibCommandLine
     {
         (List<string> filePaths, string outputPath) = CommandLineParser(args);
 
-        RtLib rtLib = new RtLib(filePaths, outputPath);
+        RtLib rtLib = new RtLib(filePaths, outputPath, false);
     }
 
     private static (List<string> filePaths, string outputPath) CommandLineParser(string[] args)
@@ -63,7 +66,7 @@ public class RtLib
         Results = Load(rtLibPath);
     }
 
-    public RtLib(List<string> resultsPath, string outputPath)
+    public RtLib(List<string> resultsPath, string outputPath, bool useChronologer)
     {
         ResultsPath = resultsPath;
         OutputPath = outputPath;
@@ -80,7 +83,21 @@ public class RtLib
         for(int i = 0; i < ResultsPath.Count; i++) 
         {
             dataLoader[i].Wait();
-            var fullSequences = dataLoader[i].Result.GroupBy(x => x.Identifier);
+            
+            // do we want to use the chronologer HI instead of the scan reported retention time 
+            if (useChronologer)
+            {
+                string[] baseSequencesArray = dataLoader[i].Result.Select(x => x.BaseSequence).ToArray();
+                string[] fullSequencesArray = dataLoader[i].Result.Select(x => x.FullSequence).ToArray();
+                var predictions = ChronologerEstimator.PredictRetentionTime(baseSequencesArray, fullSequencesArray);
+                Parallel.For(0, predictions.Length, predictionIndex =>
+                {
+                    dataLoader[i].Result[predictionIndex].ChronologerHI = predictions[predictionIndex].IsDefault()
+                        ? -1
+                        : predictions[predictionIndex];
+                });
+            }
+            var fullSequences = dataLoader[i].Result.GroupBy(x => x.FullSequence);
             if (Results.Count > 0)
             {
                 List<IRetentionTimeAlignable> newSpecies = new();
@@ -107,7 +124,7 @@ public class RtLib
                 {
                     dataLoader[i+1].Start();
                 }
-                aligner.Align();
+                aligner.Align(useChronologer);
 
                 Results = aligner.GetResults();
                 aligner.Dispose();
@@ -135,11 +152,12 @@ public class RtLib
     {
         var file = new Readers.PsmFromTsvFile(path);
         file.LoadResults();
-
+            
         return file.Results
-            .Where(item => item.AmbiguityLevel == "1")
-            .Cast<IRetentionTimeAlignable>()
-            .ToList();
+                .Where(item => item.AmbiguityLevel == "1")
+                .Cast<IRetentionTimeAlignable>()
+                .ToList();
+
     }
 
     public Task<List<IRetentionTimeAlignable>> LoadFileResultsAsync(string path)
@@ -175,35 +193,58 @@ public class Aligner : IDisposable
         speciesToAlign = setOfSpeciesToAlign;
     }
 
-    public void Align()
+    public void Align(bool useChronologer)
     {
         // novel species to predict RT
         List<PreCalibrated> toPredict = new();
 
         // new inserts
-        foreach (var species in speciesToAlign)
+
+        if (useChronologer)
         {
-            if (alignedSpecies.ContainsKey(species.Identifier) & alignedSpecies[species.Identifier].Count > 1)
+            foreach (var species in speciesToAlign)
             {
-                alignedSpecies[species.Identifier].Add(species.RetentionTime);
-            }
-            else
-            {
-                toPredict.Add(new PreCalibrated()
+                if (alignedSpecies.ContainsKey(species.FullSequence) & alignedSpecies[species.FullSequence].Count > 1)
                 {
-                    Identifier = species.Identifier,
-                    UnCalibratedRetentionTime = species.RetentionTime
-                });
+                    alignedSpecies[species.FullSequence].Add(species.RetentionTime);
+                }
+                else
+                {
+                    toPredict.Add(new PreCalibrated()
+                    {
+                        FullSequence = species.FullSequence,
+                        UnCalibratedRetentionTime = species.ChronologerHI
+                    });
+                }
+            }
+        }
+        else
+        {
+            foreach (var species in speciesToAlign)
+            {
+                if (alignedSpecies.ContainsKey(species.FullSequence) & alignedSpecies[species.FullSequence].Count > 1)
+                {
+                    alignedSpecies[species.FullSequence].Add(species.RetentionTime);
+                }
+                else
+                {
+                    toPredict.Add(new PreCalibrated()
+                    {
+                        FullSequence = species.FullSequence,
+                        UnCalibratedRetentionTime = species.RetentionTime
+                    });
+                }
             }
         }
 
+
         (string, Calibrated)[] calibrated = new (string, Calibrated)[toPredict.Count];
 
-        var predictionEngine = GetPredictionEngine();
+        var predictionEngine = GetPredictionEngine(useChronologer);
 
         Parallel.For(0, calibrated.Length, i =>
         {
-            calibrated[i] = (toPredict[i].Identifier, predictionEngine.Predict(toPredict[i]));
+            calibrated[i] = (toPredict[i].FullSequence, predictionEngine.Predict(toPredict[i]));
         });
 
         // add them into the alignedSpecies
@@ -222,7 +263,7 @@ public class Aligner : IDisposable
         Dispose();
     }
 
-    private PredictionEngine<PreCalibrated, Calibrated> GetPredictionEngine()
+    private PredictionEngine<PreCalibrated, Calibrated> GetPredictionEngine(bool useChronologer)
     {
         MLContext mlContext = new MLContext();
 
@@ -230,20 +271,35 @@ public class Aligner : IDisposable
 
         // need to separate the anchors from the novel species to the library, the next loop crashes. Need to bring the Intersects lines from previos code iteration (it worked)
         // get anchor available
-        var anchorsBetweenBothSets = speciesToAlign.Where(x => alignedSpecies.ContainsKey(x.Identifier)).DistinctBy(x => x.Identifier);
+        var anchorsBetweenBothSets = speciesToAlign.Where(x => alignedSpecies.ContainsKey(x.FullSequence)).DistinctBy(x => x.FullSequence);
 
         // Prepare the data for the dataview
-        foreach (var anchor in anchorsBetweenBothSets)
+        if (useChronologer)
         {
-            PreCalibratedList.Add(new PreCalibrated()
+            foreach (var anchor in anchorsBetweenBothSets)
             {
-                Identifier = anchor.Identifier,
-                AnchorRetentionTime = alignedSpecies[anchor.Identifier].Select(x => x).Median(),
-                UnCalibratedRetentionTime = anchor.RetentionTime
-            });
+                PreCalibratedList.Add(new PreCalibrated()
+                {
+                    FullSequence = anchor.FullSequence,
+                    AnchorRetentionTime = alignedSpecies[anchor.FullSequence].Select(x => x).Median(),
+                    UnCalibratedRetentionTime = anchor.ChronologerHI
+                });
+            }
+        }
+        else
+        {
+            foreach (var anchor in anchorsBetweenBothSets)
+            {
+                PreCalibratedList.Add(new PreCalibrated()
+                {
+                    FullSequence = anchor.FullSequence,
+                    AnchorRetentionTime = alignedSpecies[anchor.FullSequence].Select(x => x).Median(),
+                    UnCalibratedRetentionTime = anchor.RetentionTime
+                });
+            }
         }
 
-        var dataView = mlContext.Data.LoadFromEnumerable(PreCalibratedList.ToArray());
+        var dataView = mlContext.Data.LoadFromEnumerable(PreCalibratedList.Where(x => x.UnCalibratedRetentionTime > -1).ToArray());
 
         // Make the model pipeline
         var pipeline = mlContext.Transforms

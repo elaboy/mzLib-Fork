@@ -39,14 +39,14 @@ public class RetentionTimeAligner
         // Add all from the first file
         var firstLeader = FilesInHarmonizer.First();
 
-        foreach (var identifier in firstLeader.Value)
+        foreach (var FullSequence in firstLeader.Value)
         {
-            if (HarmonizedSpecies.ContainsKey(identifier.Identifier))
-                HarmonizedSpecies[identifier.Identifier].Add(firstLeader.Key, (float)identifier.RetentionTime);
+            if (HarmonizedSpecies.ContainsKey(FullSequence.FullSequence))
+                HarmonizedSpecies[FullSequence.FullSequence].Add(firstLeader.Key, (float)FullSequence.RetentionTime);
             else
             {
-                HarmonizedSpecies.Add(identifier.Identifier, new Dictionary<string, float>());
-                HarmonizedSpecies[identifier.Identifier].Add(firstLeader.Key, (float)identifier.RetentionTime);
+                HarmonizedSpecies.Add(FullSequence.FullSequence, new Dictionary<string, float>());
+                HarmonizedSpecies[FullSequence.FullSequence].Add(firstLeader.Key, (float)FullSequence.RetentionTime);
             }
         }
 
@@ -55,13 +55,13 @@ public class RetentionTimeAligner
             InitialPairWiseCalibration(file.Key);
     }
 
-    public Dictionary<string, double> QueryLibraryForRetentionTimes(List<string> identifiers)
+    public Dictionary<string, double> QueryLibraryForRetentionTimes(List<string> FullSequences)
     {
-        List<(string, double)> matches = new(identifiers.Count);
+        List<(string, double)> matches = new(FullSequences.Count);
 
         Parallel.For(0, matches.Count, index =>
         {
-            (string, double) match = (identifiers[index], HarmonizedSpecies[identifiers[index]].Values
+            (string, double) match = (FullSequences[index], HarmonizedSpecies[FullSequences[index]].Values
                 .Select(x => x).Mean());
             if (!Double.IsNaN(match.Item2))
                 matches[index] = (match.Item1, match.Item2);
@@ -108,7 +108,7 @@ public class RetentionTimeAligner
     //            // get anchors
     //            var filesInteresected = aligner.HarmonizedSpecies.Keys
     //                .Intersect(aligner.FilesInHarmonizer[file]
-    //                    .Select(x => x.Identifier)).ToList();
+    //                    .Select(x => x.FullSequence)).ToList();
 
     //            var anchors1 = filesInteresected
     //                .SelectMany(x => aligner.HarmonizedSpecies[x]
@@ -134,7 +134,7 @@ public class RetentionTimeAligner
 
     //                Calibrated prediction = predictionEngine.Predict(new PreCalibrated()
     //                {
-    //                    Identifier = unCalibratedFollowerSpecies.Key,
+    //                    FullSequence = unCalibratedFollowerSpecies.Key,
     //                    UnCalibratedRetentionTime = (float)unCalibratedFollowerSpecies.Value.First().Value
     //                });
     //                if (aligner.HarmonizedSpecies.Keys.Contains(unCalibratedFollowerSpecies.Key))
@@ -173,7 +173,7 @@ public class RetentionTimeAligner
                 // get anchors
                 var filesInteresected = HarmonizedSpecies.Keys
                     .Intersect(FilesInHarmonizer[file]
-                        .Select(x => x.Identifier)).ToList();
+                        .Select(x => x.FullSequence)).ToList();
 
                 var anchors1 = filesInteresected
                     .SelectMany(x => HarmonizedSpecies[x]
@@ -200,7 +200,7 @@ public class RetentionTimeAligner
 
                     Calibrated prediction = predictionEngine.Predict(new PreCalibrated()
                     {
-                        Identifier = unCalibratedFollowerSpecies.Key,
+                        FullSequence = unCalibratedFollowerSpecies.Key,
                         UnCalibratedRetentionTime = (float)unCalibratedFollowerSpecies.Value.First().Value
                     });
                     if (HarmonizedSpecies.Keys.Contains(unCalibratedFollowerSpecies.Key))
@@ -236,7 +236,7 @@ public class RetentionTimeAligner
         {
             PreCalibrateds.Add(new PreCalibrated()
             {
-                Identifier = anchor.Key,
+                FullSequence = anchor.Key,
                 AnchorRetentionTime = (float)anchor.Value.anchorRetentionTime,
                 UnCalibratedRetentionTime = (float)anchor.Value.retentionTime
             });
@@ -267,7 +267,7 @@ public class RetentionTimeAligner
 
         var filesInteresected = HarmonizedSpecies.Keys
             .Intersect(FilesInHarmonizer[followerFile]
-                .Select(x => x.Identifier)).ToList();
+                .Select(x => x.FullSequence)).ToList();
 
         var anchors1 = filesInteresected
             .SelectMany(x => HarmonizedSpecies[x]
@@ -292,16 +292,16 @@ public class RetentionTimeAligner
         {
             Calibrated prediction = predictionEngine.Predict(new PreCalibrated()
             {
-                Identifier = unCalibratedFollowerSpecies.Identifier,
+                FullSequence = unCalibratedFollowerSpecies.FullSequence,
                 UnCalibratedRetentionTime = (float)unCalibratedFollowerSpecies.RetentionTime
             });
-            if (HarmonizedSpecies.ContainsKey(unCalibratedFollowerSpecies.Identifier))
-                HarmonizedSpecies[unCalibratedFollowerSpecies.Identifier].Add(followerFile,
+            if (HarmonizedSpecies.ContainsKey(unCalibratedFollowerSpecies.FullSequence))
+                HarmonizedSpecies[unCalibratedFollowerSpecies.FullSequence].Add(followerFile,
                     prediction.CalibratedRetentionTime);
             else
             {
-                HarmonizedSpecies.Add(unCalibratedFollowerSpecies.Identifier, new Dictionary<string, float>());
-                HarmonizedSpecies[unCalibratedFollowerSpecies.Identifier].Add(unCalibratedFollowerSpecies.FileName,
+                HarmonizedSpecies.Add(unCalibratedFollowerSpecies.FullSequence, new Dictionary<string, float>());
+                HarmonizedSpecies[unCalibratedFollowerSpecies.FullSequence].Add(unCalibratedFollowerSpecies.FileName,
                     prediction.CalibratedRetentionTime);
             }
         }

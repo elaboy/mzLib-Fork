@@ -5,6 +5,7 @@ using CsvHelper;
 using CsvHelper.Configuration;
 using MassSpectrometry;
 using MathNet.Numerics.Statistics;
+using Omics.SpectrumMatch;
 using Proteomics.PSM;
 using Proteomics.RetentionTimePrediction.Chronologer;
 using Readers.QuantificationResults;
@@ -72,10 +73,10 @@ public class PlotFactory
 
         foreach (var file in filteredPsmData)
         {
-            var identifierGrouped = file.GroupBy(x => x.Identifier).ToList();
+            var FullSequenceGrouped = file.GroupBy(x => x.FullSequence).ToList();
 
             var toReplace = new List<IRetentionTimeAlignable>();
-            foreach (var sequence in identifierGrouped)
+            foreach (var sequence in FullSequenceGrouped)
             {
                 toReplace.AddRange(sequence.Select(x => x));
             }
@@ -110,7 +111,7 @@ public class PlotFactory
                 {
                     Parallel.ForEach(file.Value, psm =>
                     {
-                        psm.ChronolgerHI = GetChronologerHI(psm);
+                        psm.ChronologerHIDouble = GetChronologerHI(psm);
                     });
                 }
 
@@ -192,9 +193,9 @@ public class PlotFactory
                 foreach (var psm in file.Value)
                 {
                     writer.WriteLine(psm.BaseSeq + "\t" +
-                                     psm.FullSequence + "\t" +
+                                     ((SpectrumMatchFromTsv)psm).FullSequence + "\t" +
                                      psm.RetentionTime + "\t" +
-                                     psm.ChronolgerHI + "\t" +
+                                     psm.ChronologerHIDouble + "\t" +
                                      psm.AmbiguityLevel + "\t" +
                                      psm.QValue + "\t" +
                                      psm.PEP_QValue + "\t" +
@@ -244,13 +245,13 @@ public class PlotFactory
     }
 
     private static double? GetChronologerHI(PsmFromTsv psm) => 
-        ChronologerEstimator.PredictRetentionTime(psm.BaseSeq, psm.FullSequence); 
+        ChronologerEstimator.PredictRetentionTime(psm.BaseSeq, ((SpectrumMatchFromTsv)psm).FullSequence); 
 
     private static void ChronologerHI(List<PsmFromTsv> psms)
     {
         foreach (PsmFromTsv psm in psms)
         {
-            psm.ChronolgerHI = ChronologerEstimator.PredictRetentionTime(psm.BaseSeq, psm.FullSequence);
+            psm.ChronologerHIDouble = ChronologerEstimator.PredictRetentionTime(psm.BaseSeq, ((SpectrumMatchFromTsv)psm).FullSequence);
         }
     }
 }
