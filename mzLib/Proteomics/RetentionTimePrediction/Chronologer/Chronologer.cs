@@ -40,7 +40,7 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
         /// </summary>
         /// <param name="weightsPath"></param>
         /// <param name="evalMode"></param>
-        public Chronologer(string weightsPath, bool evalMode = true) : base(nameof(Chronologer))
+        private Chronologer(string weightsPath, bool evalMode = true) : base(nameof(Chronologer))
         {
             RegisterComponents();
 

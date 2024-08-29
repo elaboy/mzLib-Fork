@@ -89,7 +89,7 @@ public class RtLib
             {
                 string[] baseSequencesArray = dataLoader[i].Result.Select(x => x.BaseSequence).ToArray();
                 string[] fullSequencesArray = dataLoader[i].Result.Select(x => x.FullSequence).ToArray();
-                var predictions = ChronologerEstimator.PredictRetentionTime(baseSequencesArray, fullSequencesArray);
+                var predictions = ChronologerEstimator.PredictRetentionTime(baseSequencesArray, fullSequencesArray, true);
                 Parallel.For(0, predictions.Length, predictionIndex =>
                 {
                     dataLoader[i].Result[predictionIndex].ChronologerHI = predictions[predictionIndex].IsDefault()
@@ -119,7 +119,7 @@ public class RtLib
                 }
                 // Calibrate
                 Aligner aligner = new Aligner(Results, newSpecies);
-                // Start next loading task
+                // Start next file loading task
                 if (i < ResultsPath.Count - 1)
                 {
                     dataLoader[i+1].Start();

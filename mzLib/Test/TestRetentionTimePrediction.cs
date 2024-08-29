@@ -781,7 +781,7 @@ namespace Test
             string[] testingDataFullSequence = testingData.Select(x => x.Item2);
 
             var noMods =
-                ChronologerEstimator.PredictRetentionTime(testingDataBaseSequence, testingDataFullSequence);
+                ChronologerEstimator.PredictRetentionTime(testingDataBaseSequence, testingDataFullSequence, false);
             Assert.That(noMods[3] == (float)0);
             Assert.That(noMods[5] == (float)0);
             Assert.That(noMods[6] == (float)0);
@@ -825,7 +825,7 @@ namespace Test
             List<float> predictions = new();
             
             predictions.AddRange(
-                    ChronologerEstimator.PredictRetentionTime(baseSequences, fullSequences));
+                    ChronologerEstimator.PredictRetentionTime(baseSequences, fullSequences, false));
 
             int zero = 0;
         }

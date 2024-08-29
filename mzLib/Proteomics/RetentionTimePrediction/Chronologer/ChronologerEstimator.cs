@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.CodeDom.Compiler;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TorchSharp;
@@ -43,33 +44,94 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
             return prediction[0].ToDouble();
         }
 
-        public static float[] PredictRetentionTime(string[] baseSequences, string[] fullSequences)
+        public static float[] PredictRetentionTime(string[] baseSequences, string[] fullSequences, bool gpu)
         {
-            List<(Task<(torch.Tensor,bool)>, bool)> tasksRunning = new();
+            torch.InitializeDeviceType(DeviceType.CUDA);
+            // if cuda is available, then use it bro
+            var device = torch.cuda_is_available()
+                ? new torch.Device(DeviceType.CUDA)
+                : new torch.Device(DeviceType.CPU);
+
+            ChronologerModel.to(device);
+
+            List<(Task<(torch.Tensor, bool)>, bool)> tasksRunning = new();
 
             if (baseSequences.Length != fullSequences.Length)
                 return null; // mayber throw exception here?
 
+            //vstack tensors and then batch predict to avoid running out of vRAM, I think system RAM transfer has big latency so keep em small
 
-
-            var tensorizeTasks = new Task<float>[baseSequences.Length];
             float[] predictions = new float[baseSequences.Length];
 
-            Parallel.For(0, baseSequences.Length, (i, state) =>
+            if (gpu)
             {
-                var baseSeq = baseSequences[i];
-                var fullSeq = fullSequences[i];
-
-                var (tensor, compatible) = Tensorize(baseSeq, fullSeq, out bool chronologerCompatible);
-                if (compatible)
+                // tensorize all
+                torch.Tensor[] tensorsArray = new torch.Tensor[baseSequences.Length];
+                bool[] compatibleTracker = new bool[baseSequences.Length];
+                
+                Parallel.For(0, baseSequences.Length, (i, state) =>
                 {
-                    var chronologerPrediction = ChronologerModel.Predict(tensor).data<float>().ToArray()[0];
-                    predictions[i] = chronologerPrediction;
-                }
-                else
-                    predictions[i] = -1;
-            });
+                    var baseSeq = baseSequences[i];
+                    var fullSeq = fullSequences[i];
 
+                    var (tensor, compatible) = Tensorize(baseSeq, fullSeq, out bool chronologerCompatible);
+                    if (compatible)
+                    {
+                        tensorsArray[i] = tensor;
+                        compatibleTracker[i] = compatible;
+                    }
+                    else
+                    {
+                        tensorsArray[i] = torch.zeros(1, 52, torch.ScalarType.Int64);
+                        compatibleTracker[i] = compatible;
+                    }
+                });
+                // vstack and split
+                var stackedTensors = torch.vstack(tensorsArray).split(100);
+
+                float[] preds = new float[stackedTensors.Length];
+
+                // make batches
+                for (int batch = 0; batch < stackedTensors.Length; batch++)
+                {
+                    var output = ChronologerModel.Predict(stackedTensors[batch].to(device));
+                    //move output to cpu
+                    var outputArray = output.to(DeviceType.CPU).data<float>().ToArray();
+                    Parallel.For(0, outputArray.Length , outputIndex =>
+                    {
+                        preds[batch] = outputArray[outputIndex];
+                    });
+                }
+
+                //change to -1 if same index in compatibleTracker is false, else leave as is
+                //predictions = preds.SelectMany(x => x).ToArray();
+                // return vstacked tensors as a matrix => float?[]
+
+                for (var predictionsIndex = 0; predictionsIndex < predictions.Length; predictionsIndex++)
+                {
+                    if (compatibleTracker[predictionsIndex]) continue;
+
+                    predictions[predictionsIndex] = -1;
+                }
+            }
+            else
+            {
+                Parallel.For(0, baseSequences.Length, (i, state) =>
+                {
+                    var baseSeq = baseSequences[i];
+                    var fullSeq = fullSequences[i];
+
+                    var (tensor, compatible) = Tensorize(baseSeq, fullSeq, out bool chronologerCompatible);
+                    if (compatible)
+                    {
+                        var chronologerPrediction = ChronologerModel.Predict(tensor).data<float>().ToArray()[0];
+                        predictions[i] = chronologerPrediction;
+                    }
+                    else
+                        predictions[i] = -1;
+                });
+            }
+            
             return predictions;
         }
         /// <summary>
@@ -119,11 +181,11 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
                     //if mod, enter
                     if (nTerminalMod)
                     {
-                        if(subString.Contains("Acetyl"))
-                            tensor[0][0] = 39; 
+                        if (subString.Contains("Acetyl"))
+                            tensor[0][0] = 39;
                         else
                         {
-                            tensor[0][0] = 38; 
+                            tensor[0][0] = 38;
                         }
                         nTerminalMod = false; //next iteration is not a mod
                         continue;
