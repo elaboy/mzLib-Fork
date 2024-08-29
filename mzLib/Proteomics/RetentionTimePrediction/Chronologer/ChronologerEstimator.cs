@@ -1,8 +1,10 @@
-﻿using System.CodeDom.Compiler;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Data;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
 using TorchSharp;
+using TorchSharp.Modules;
 
 namespace Proteomics.RetentionTimePrediction.Chronologer
 {
@@ -46,6 +48,7 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
 
         public static float[] PredictRetentionTime(string[] baseSequences, string[] fullSequences, bool gpu)
         {
+            // TODO try catch here
             torch.InitializeDeviceType(DeviceType.CUDA);
             // if cuda is available, then use it bro
             var device = torch.cuda_is_available()
@@ -68,7 +71,7 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
                 // tensorize all
                 torch.Tensor[] tensorsArray = new torch.Tensor[baseSequences.Length];
                 bool[] compatibleTracker = new bool[baseSequences.Length];
-                
+
                 Parallel.For(0, baseSequences.Length, (i, state) =>
                 {
                     var baseSeq = baseSequences[i];
@@ -87,29 +90,38 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
                     }
                 });
                 // vstack and split
-                var stackedTensors = torch.vstack(tensorsArray).split(100);
+                var stackedTensors = torch.vstack(tensorsArray);
 
-                float[] preds = new float[stackedTensors.Length];
+                float[] preds = new float[stackedTensors.size(0)];
 
                 // make batches
-                for (int batch = 0; batch < stackedTensors.Length; batch++)
+                using var dataset = torch.utils.data.TensorDataset(stackedTensors);
+                using var dataLoader = torch.utils.data.DataLoader(dataset, 2048);
+
+                var predictionHolder = new List<float>();
+                foreach (var batch in dataLoader)
                 {
-                    var output = ChronologerModel.Predict(stackedTensors[batch].to(device));
-                    //move output to cpu
-                    var outputArray = output.to(DeviceType.CPU).data<float>().ToArray();
-                    Parallel.For(0, outputArray.Length , outputIndex =>
-                    {
-                        preds[batch] = outputArray[outputIndex];
-                    });
+                    var output = ChronologerModel.Predict(torch.vstack(batch).to(device));
+                    predictionHolder.AddRange(output.to(DeviceType.CPU).data<float>());
+                    output.Dispose();
                 }
 
+                Parallel.For(0, preds.Length, outputIndex =>
+                {
+                    preds[outputIndex] = predictionHolder[outputIndex];
+                });
+            
                 //change to -1 if same index in compatibleTracker is false, else leave as is
                 //predictions = preds.SelectMany(x => x).ToArray();
                 // return vstacked tensors as a matrix => float?[]
 
                 for (var predictionsIndex = 0; predictionsIndex < predictions.Length; predictionsIndex++)
                 {
-                    if (compatibleTracker[predictionsIndex]) continue;
+                    if (compatibleTracker[predictionsIndex])
+                    {
+                        predictions[predictionsIndex] = predictionHolder[predictionsIndex];
+                        continue;
+                    }
 
                     predictions[predictionsIndex] = -1;
                 }
@@ -131,7 +143,7 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
                         predictions[i] = -1;
                 });
             }
-            
+
             return predictions;
         }
         /// <summary>

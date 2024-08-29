@@ -8,6 +8,7 @@ using MathNet.Numerics.Statistics;
 using Microsoft.ML;
 using Nett;
 using Proteomics.RetentionTimePrediction.Chronologer;
+using Readers;
 using TorchSharp;
 
 namespace RTLib;
@@ -55,6 +56,15 @@ public class RtLibCommandLine
 
 }
 
+public class LightPsm : IRetentionTimeAlignable
+{
+    public string FileName { get; set; }
+    public float RetentionTime { get; set; }
+    public float ChronologerHI { get; set; }
+    public string BaseSequence { get; set; }
+    public string FullSequence { get; set; }
+}
+
 public class RtLib
 {
     private List<string> ResultsPath { get; }
@@ -72,7 +82,7 @@ public class RtLib
         OutputPath = outputPath;
         Results = new Dictionary<string, List<float>>();
 
-        Task<List<IRetentionTimeAlignable>>[] dataLoader = new Task<List<IRetentionTimeAlignable>>[ResultsPath.Count];
+        Task<List<LightPsm>>[] dataLoader = new Task<List<LightPsm>>[ResultsPath.Count];
 
         for (int i = 0; i < ResultsPath.Count; i++)
         {
@@ -128,6 +138,7 @@ public class RtLib
 
                 Results = aligner.GetResults();
                 aligner.Dispose();
+                dataLoader[i].Dispose();
             }
             else
             {
@@ -141,28 +152,40 @@ public class RtLib
                     Results.Add(fullSequence.Key, new List<float>());
                     Results[fullSequence.Key].AddRange(fullSequence.Select(x => x.RetentionTime));
                 }
+                dataLoader[i].Dispose();
             }
-            Debug.WriteLine($"file: {i} of {Results.Count}");
+            Debug.WriteLine($"file: {i} of {ResultsPath.Count}");
             //dataLoader[i].Result.Clear();
         }
         Write();
     }
 
-    public List<IRetentionTimeAlignable> LoadFileResults(string path)
+    public List<LightPsm> LoadFileResults(string path)
     {
         var file = new Readers.PsmFromTsvFile(path);
         file.LoadResults();
-            
-        return file.Results
+        
+        var results =  file.Results
                 .Where(item => item.AmbiguityLevel == "1")
-                .Cast<IRetentionTimeAlignable>()
                 .ToList();
+        
+        List<LightPsm> lightPsms = new List<LightPsm>();
+        foreach (var item in results)
+        {
+            lightPsms.Add(new LightPsm(){BaseSequence = item.BaseSequence,
+                ChronologerHI = item.ChronologerHI, 
+                FileName = item.FileName, 
+                FullSequence = item.FullSequence, 
+                RetentionTime = (float)item.RetentionTime.Value});
+        }
+
+        return lightPsms;
 
     }
 
-    public Task<List<IRetentionTimeAlignable>> LoadFileResultsAsync(string path)
+    public Task<List<LightPsm>> LoadFileResultsAsync(string path)
     {
-        var results = new Task<List<IRetentionTimeAlignable>>(() => LoadFileResults(path));
+        var results = new Task<List<LightPsm>>(() => LoadFileResults(path));
         return results;
     }
 

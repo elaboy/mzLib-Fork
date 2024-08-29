@@ -52,16 +52,12 @@ namespace Proteomics.PSM
         //For Aligner Interface
         public string FileName { get => FileNameWithoutExtension; set => FileNameWithoutExtension = value; }
         float IRetentionTimeAlignable.RetentionTime { get => (float?)RetentionTime.Value ?? -1; set => RetentionTime = value; } 
-        float IRetentionTimeAlignable.ChronologerHI { get => (float)ChronologerHIDouble; set => SetChronologerHI(value); }
+        public float ChronologerHI { get ; set; }
 
         public float SetChronologerHI(double? chronologerHI) => (float)chronologerHI.Value;
         public string BaseSequence { get => BaseSeq; set => SetBaseSequence(); }
         public string SetBaseSequence() => BaseSeq;
-        string IRetentionTimeAlignable.FullSequence { get => FullSequence; set => SetFullSequence(); }
-        public string SetFullSequence() => FullSequence;
-        string FullSequence => base.FullSequence;
-
-
+        
 
         public PsmFromTsv(string line, char[] split, Dictionary<string, int> parsedHeader)
         {
