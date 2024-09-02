@@ -1,7 +1,9 @@
-﻿using System.Diagnostics;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
+using CsvHelper.Configuration;
 using Easy.Common.Extensions;
 using MassSpectrometry;
 using MathNet.Numerics.Statistics;
@@ -10,6 +12,7 @@ using Nett;
 using Proteomics.RetentionTimePrediction.Chronologer;
 using Readers;
 using TorchSharp;
+using CsvHelper.Configuration.Attributes;
 
 namespace RTLib;
 public class RtLibCommandLine
@@ -58,19 +61,38 @@ public class RtLibCommandLine
 
 public class LightPsm : IRetentionTimeAlignable
 {
+    [CsvHelper.Configuration.Attributes.Index(0)]
     public string FileName { get; set; }
-    public float RetentionTime { get; set; }
-    public float ChronologerHI { get; set; }
+    
+    [CsvHelper.Configuration.Attributes.Index(1)]
     public string BaseSequence { get; set; }
+    [CsvHelper.Configuration.Attributes.Index(2)]
     public string FullSequence { get; set; }
+    [CsvHelper.Configuration.Attributes.Index(3)]
+    public float RetentionTime { get; set; }
+    [CsvHelper.Configuration.Attributes.Index(4)]
+    public float ChronologerHI { get; set; }
+}
+
+public class LightPsmMap : ClassMap<LightPsm>
+{
+    public LightPsmMap()
+    {
+        Map(m => m.FileName).Index(0).Name("File Name");
+        Map(m => m.BaseSequence).Index(1).Name("Base Sequence");
+        Map(m => m.FullSequence).Index(2).Name("Full Sequence");
+        Map(m => m.RetentionTime).Index(3).Name("Scan Retention Time");
+        Map(m => m.ChronologerHI).Index(4).Name("Chronologer HI Prediction");
+    }
 }
 
 public class RtLib
 {
-    private List<string> ResultsPath { get; }
-    private string OutputPath { get;}
+    public List<string> ResultsPath { get; }
+    public string OutputPath { get;}
     public Dictionary<string, List<float>> Results { get; }
 
+    public RtLib(){}
     public RtLib(string rtLibPath)
     {
         Results = Load(rtLibPath);
@@ -157,7 +179,7 @@ public class RtLib
             Debug.WriteLine($"file: {i} of {ResultsPath.Count}");
             //dataLoader[i].Result.Clear();
         }
-        Write();
+        //Write();
     }
 
     public List<LightPsm> LoadFileResults(string path)

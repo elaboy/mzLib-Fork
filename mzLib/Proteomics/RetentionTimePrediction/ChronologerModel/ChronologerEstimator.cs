@@ -47,18 +47,17 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
 
         public static float[] PredictRetentionTime(string[] baseSequences, string[] fullSequences, bool gpu)
         {
+            torch.Device device;
             try
             {
                 torch.InitializeDeviceType(DeviceType.CUDA);
+                device = new torch.Device(DeviceType.CUDA);
             }
             catch
             {
                 Console.WriteLine(new Exception("This device does not support CUDA"));
+                device = new torch.Device(DeviceType.CPU);
             }
-            // if cuda is available, then use it bro
-            var device = torch.cuda_is_available()
-                ? new torch.Device(DeviceType.CUDA)
-                : new torch.Device(DeviceType.CPU);
 
             ChronologerModel.to(device);
 
