@@ -1,16 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
 using TorchSharp;
-using TorchSharp.Modules;
 
 namespace Proteomics.RetentionTimePrediction.Chronologer
 {
     public static class ChronologerEstimator
     {
-        private static Chronologer ChronologerModel = new Chronologer();
+        private static ChronologerModel.Chronologer ChronologerModel = new ChronologerModel.Chronologer();
 
         /// <summary>
         /// Uses the Chronologer model to predict C18 retention times (reported in % ACN).
@@ -23,7 +22,7 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
         /// "Phosphorylation on S"
         /// "Phosphorylation on T"
         /// "Phosphorylation on Y"
-        /// "Accetylation on K"
+        /// "Acetylation on K"
         /// "Succinylation on K"
         /// "Ubiquitination on K"
         /// "Methylation on K"
@@ -48,8 +47,14 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
 
         public static float[] PredictRetentionTime(string[] baseSequences, string[] fullSequences, bool gpu)
         {
-            // TODO try catch here
-            torch.InitializeDeviceType(DeviceType.CUDA);
+            try
+            {
+                torch.InitializeDeviceType(DeviceType.CUDA);
+            }
+            catch
+            {
+                Console.WriteLine(new Exception("This device does not support CUDA"));
+            }
             // if cuda is available, then use it bro
             var device = torch.cuda_is_available()
                 ? new torch.Device(DeviceType.CUDA)
@@ -110,7 +115,7 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
                 {
                     preds[outputIndex] = predictionHolder[outputIndex];
                 });
-            
+
                 //change to -1 if same index in compatibleTracker is false, else leave as is
                 //predictions = preds.SelectMany(x => x).ToArray();
                 // return vstacked tensors as a matrix => float?[]
@@ -326,14 +331,14 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
                 { ('Y', ""), 20 }, //'Tyrosine
                 { ('C', "Carbamidomethyl on C"), 21 }, //'Carbamidomethyl
                 { ('M', "Oxidation on M"), 22 }, //'Oxidized
-                { ('E', "Glu to PyroGlu"), 24 }, //'Pyroglutamate
+                { ('E', "Glu to PyroGlu"), 24 }, //'Pyro-glutamate
                 { ('S', "Phosphorylation on S"), 25 }, //'Phosphoserine
                 { ('T', "Phosphorylation on T"), 26 }, //'Phosphothreonine
                 { ('Y', "Phosphorylation on Y"), 27 }, //'Phosphotyrosine
-                { ('K', "Accetylation on K"), 28 }, //'Acetylated
+                { ('K', "Accetylation on K"), 28 }, //acetylation
                 { ('K', "Succinylation on K"), 29 }, //'Succinylated
                 { ('K', "Ubiquitination on K"), 30 }, //'Ubiquitinated
-                { ('K', "Methylation on K"), 31 }, //'Monomethyl
+                { ('K', "Methylation on K"), 31 }, //'Mono-methyl
                 { ('K', "Dimethylation on K"), 32 }, //'Dimethyl
                 { ('K', "Trimethylation on K"), 33 }, //'Trimethyl
                 { ('R', "Methylation on R"), 34 }, //'Monomethyl
