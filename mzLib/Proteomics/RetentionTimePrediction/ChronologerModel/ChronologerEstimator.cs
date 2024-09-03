@@ -81,7 +81,9 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
                     var baseSeq = baseSequences[i];
                     var fullSeq = fullSequences[i];
 
-                    var (tensor, compatible) = Tensorize(baseSeq, fullSeq, out bool chronologerCompatible);
+                    var (tensor, compatible) = Tensorize(baseSeq,
+                        fullSeq,
+                        out bool chronologerCompatible);
                     if (compatible)
                     {
                         tensorsArray[i] = tensor;
@@ -100,7 +102,7 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
 
                 // make batches
                 using var dataset = torch.utils.data.TensorDataset(stackedTensors);
-                using var dataLoader = torch.utils.data.DataLoader(dataset, 2048);
+                using var dataLoader = torch.utils.data.DataLoader(dataset, 512);
 
                 var predictionHolder = new List<float>();
                 foreach (var batch in dataLoader)

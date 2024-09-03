@@ -57,6 +57,8 @@ namespace RtLibGUI
                 file.LoadResults();
             });
 
+            loadResults.Start();
+
             await loadResults;
         }
 
@@ -100,7 +102,8 @@ namespace RtLibGUI
 
             // save as tsv using CSVHelper
 
-            using(var writer = new StreamWriter(Path.Join(fullPathToFolder, file.Results.First().FileName+"WithChronologerHI.csv")))
+            using(var writer = new StreamWriter(Path.Join(fullPathToFolder,
+                      file.Results.First().FileName+"WithChronologerHI.csv")))
             using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
             {
                 csv.WriteHeader<LightPsmMap>();
