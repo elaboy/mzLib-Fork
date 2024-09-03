@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
+using Easy.Common.Extensions;
+using Tensorboard;
 using TorchSharp;
 
 namespace Proteomics.RetentionTimePrediction.Chronologer
@@ -35,17 +37,29 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
         /// <param name="baseSequence"></param>
         /// <param name="fullSequence"></param>
         /// <returns></returns>
-        public static double? PredictRetentionTime(string baseSequence, string fullSequence)
+        public static float PredictRetentionTime(string baseSequence, string fullSequence)
         {
+            if (baseSequence.Length > 50)
+            {
+                return -1;
+            }
             var tensor = Tensorize(baseSequence, fullSequence);
-            if (tensor is null)
-                return null;
 
-            var prediction = ChronologerModel.Predict(tensor);
-            return prediction[0].ToDouble();
+            TorchSharp.Utils.TensorAccessor<long> tensorAccessor = tensor.data<long>();
+            long[] tensorAsArray = tensorAccessor.ToArray();
+            long[] incompatibleTensor = new long[52];
+            incompatibleTensor.Fill(0);
+
+            if (tensorAsArray.SequenceEqual(incompatibleTensor))
+            {
+                return -1;
+            }
+
+            torch.Tensor prediction = ChronologerModel.Predict(tensor);
+            return prediction.data<float>()[0];
         }
 
-        public static float[] PredictRetentionTime(string[] baseSequences, string[] fullSequences, bool gpu)
+        public static float[] PredictRetentionTime(string[] baseSequences, string[] fullSequences, bool gpu=true, int batch_size = 512)
         {
             torch.Device device;
             try
@@ -55,13 +69,11 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
             }
             catch
             {
-                Console.WriteLine(new Exception("This device does not support CUDA"));
+                Console.WriteLine(new Exception("This device does not support CUDA, using CPU"));
                 device = new torch.Device(DeviceType.CPU);
             }
 
             ChronologerModel.to(device);
-
-            List<(Task<(torch.Tensor, bool)>, bool)> tasksRunning = new();
 
             if (baseSequences.Length != fullSequences.Length)
                 return null; // mayber throw exception here?
@@ -81,9 +93,7 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
                     var baseSeq = baseSequences[i];
                     var fullSeq = fullSequences[i];
 
-                    var (tensor, compatible) = Tensorize(baseSeq,
-                        fullSeq,
-                        out bool chronologerCompatible);
+                    var (tensor, compatible) = Tensorize(baseSeq, fullSeq, out bool chronologerCompatible);
                     if (compatible)
                     {
                         tensorsArray[i] = tensor;
@@ -102,7 +112,7 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
 
                 // make batches
                 using var dataset = torch.utils.data.TensorDataset(stackedTensors);
-                using var dataLoader = torch.utils.data.DataLoader(dataset, 512);
+                using var dataLoader = torch.utils.data.DataLoader(dataset, 2048);
 
                 var predictionHolder = new List<float>();
                 foreach (var batch in dataLoader)
@@ -241,7 +251,7 @@ namespace Proteomics.RetentionTimePrediction.Chronologer
             // Chronologer does not support metals
             if (fullSequence.Contains("Metal") || baseSequence.Contains("U"))
             {
-                return null;
+                return torch.zeros(1, 52, torch.ScalarType.Int64);
             }
 
             var fullSeq = fullSequence.Split(new[] { '[', ']' })
