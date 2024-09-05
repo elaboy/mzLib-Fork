@@ -10,18 +10,21 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="20"/>
             <ColumnDefinition Width="auto"/>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Name="DataColumn" Width="auto"/>
             <ColumnDefinition Width="20"/>
         </Grid.ColumnDefinitions>
 
         <Grid.RowDefinitions>
             <RowDefinition Height="20"/>
             <RowDefinition Height="20"/>
-            <RowDefinition Height="20"/>
+            <RowDefinition Name="DataRow" Height="auto"/>
             <RowDefinition Height="20"/>
         </Grid.RowDefinitions>
 
         <Button Grid.Column="1" Grid.Row="1" Content="Select File to add Chronologer HI values" Click="GetFile"/>
         <Button Grid.Column="1" Grid.Row="2" Content="Write the file" Click="WriteFile"/>
+        <DataGrid Grid.Column="DataColumn" Grid.Row="DatRow">
+            
+        </DataGrid>
     </Grid>
 </Window>
