@@ -20,14 +20,61 @@
         <Grid Grid.Column="0">
             <StackPanel Grid.Column="0" Grid.Row="0" Orientation="Vertical"  Margin="5">
                 <TextBlock Text="Chronologer HI" FontSize="24" Margin="10"/>
-                <Button Click="LoadFileClick" Content="Load File" FontSize="24" Margin="10"/>
-                <Button Content="Peek at file" FontSize="24" Margin="10"/>
-                <Button Content="Write File" FontSize="24" Margin="10"/>
+
+                <Button Command="{Binding LoadFileCommand}"
+                        Content="Load File" 
+                        FontSize="24" 
+                        Margin="10"/>
+
+                <Button Command="{Binding RunChronologerCommand}" 
+                        Content="Run Chronologer"
+                        FontSize="24"
+                        Margin="10"/>
+
+                <Button Command="{Binding WriteFileCommand}"
+                        Content="Write File" 
+                        FontSize="24" 
+                        Margin="10"/>
             </StackPanel>
         </Grid>
 
-        <Grid Grid.Column="1">
-            <DataGrid Grid.Column="0" Grid.Row="0" Height="auto" Width="auto" Margin="10"/>
+        <Grid Grid.Row="0" Grid.Column="1" Width="auto">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <TextBox Text="{Binding FilePath}"
+                     Grid.Column="0" 
+                     Grid.Row="0" 
+                     Height="20" 
+                     Width="auto" 
+                     Margin="10"/>
+
+            <TabControl Grid.Row="1">
+                <TabItem Header="Psm File (Original File)">
+                    <DataGrid Grid.Column="0" 
+                              Grid.Row="1" 
+                              Height="auto" 
+                              Width="auto" 
+                              Margin="10"
+                              DataContext="{Binding Psms}"
+                              />
+                </TabItem>
+
+                <TabItem Header="Chronologer Predictions">
+                    <DataGrid Grid.Column="0" 
+                              Grid.Row="1" 
+                              Height="auto" 
+                              Width="auto" 
+                              Margin="10"/>
+                </TabItem>
+            </TabControl>
+
         </Grid>
 
     </Grid>

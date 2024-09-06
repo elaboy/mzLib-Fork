@@ -12,10 +12,5 @@ namespace ToolKitUI.Views
         {
             InitializeComponent();
         }
-
-        private void LoadFileClick(object sender, RoutedEventArgs e)
-        {
-
-        }
     }
 }
