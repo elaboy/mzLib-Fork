@@ -10,7 +10,7 @@
         Height="450" 
         Width="800"
         FontSize="14">
-    <Grid Margin="20" MaxWidth="600">
+    <Grid Margin="20" >
         <views:MakeChronologerPredictionsView DataContext="{Binding CurrentViewModel}"/>
     </Grid>
 </Window>

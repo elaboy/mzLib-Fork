@@ -6,9 +6,10 @@
              xmlns:local="clr-namespace:ToolKitUI.Views"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800" Background="White">
-    <Grid IsSharedSizeScope="True">
+    <Grid Width="auto" Height="auto">
 
         <Grid.ColumnDefinitions>
+            <!-- Buttons -->
             <ColumnDefinition Width="auto"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
@@ -17,7 +18,8 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Grid Grid.Column="0">
+        <!-- Buttons -->
+        <Grid Grid.Column="0" HorizontalAlignment="Left">
             <StackPanel Grid.Column="0" Grid.Row="0" Orientation="Vertical"  Margin="5">
                 <TextBlock Text="Chronologer HI" FontSize="24" Margin="10"/>
 
@@ -35,13 +37,17 @@
                         Content="Write File" 
                         FontSize="24" 
                         Margin="10"/>
+
+                <CheckBox Command="{Binding ShowNonAmbiguousPsms}"
+                          Content="Ambigous Psms" VerticalContentAlignment="Center"
+                          FontSize="24"
+                          Margin="10"/>
+
             </StackPanel>
         </Grid>
 
-        <Grid Grid.Row="0" Grid.Column="1" Width="auto">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"></ColumnDefinition>
-            </Grid.ColumnDefinitions>
+        <!-- RIght Side -->
+        <Grid Grid.Row="0" Grid.Column="1" >
 
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto"/>
@@ -60,18 +66,18 @@
                     <DataGrid Grid.Column="0" 
                               Grid.Row="1" 
                               Height="auto" 
-                              Width="auto" 
                               Margin="10"
-                              DataContext="{Binding Psms}"
-                              />
+                              ItemsSource="{Binding FilteredPsms}"
+                              AlternatingRowBackground="LightGray"/>
                 </TabItem>
 
                 <TabItem Header="Chronologer Predictions">
                     <DataGrid Grid.Column="0" 
                               Grid.Row="1" 
                               Height="auto" 
-                              Width="auto" 
-                              Margin="10"/>
+                              Margin="10"
+                              ItemsSource="{Binding LightPsms}"
+                              AlternatingRowBackground="LightGray"/>
                 </TabItem>
             </TabControl>
 
