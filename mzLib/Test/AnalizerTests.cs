@@ -28,7 +28,7 @@ public class AnalizerTests
     [Test]
     public void TestRTLibCMD2()
     {
-        PlotFactory factory = new PlotFactory(
+        AnalyzerEngine factory = new AnalyzerEngine(
             new string[11]
             { 
                 @"E:\Datasets\\Mann_11cell_lines\\A549\\2024-07-10-15-53-11_ClassigBigSearch\\Task4-SearchTask\\AllPSMs.psmtsv", 
@@ -45,6 +45,6 @@ public class AnalizerTests
 
             });
         
-        PlotFactory.Run("CreateRTLib");
+        AnalyzerEngine.Run("CreateRTLib");
     }
 }

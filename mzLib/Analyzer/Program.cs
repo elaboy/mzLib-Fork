@@ -11,7 +11,7 @@ using Proteomics.RetentionTimePrediction.Chronologer;
 using Readers.QuantificationResults;
 
 namespace Analyzer;
-public class PlotFactory
+public class AnalyzerEngine
 {
     private static Dictionary<string, List<string>> options = new Dictionary<string, List<string>>()
     {
@@ -28,7 +28,7 @@ public class PlotFactory
     public static List<IRetentionTimeAlignable> AlignablePsms { get; set; }
     public Dictionary<string, Dictionary<string, double>> RetentionTimeLibrary { get; set; }
 
-    public PlotFactory(string[] paths, string[] labels)
+    public AnalyzerEngine(string[] paths, string[] labels)
     {
         // makes the file dictionary (psms with label as the key)
         fileDictionary = new Dictionary<string, List<PsmFromTsv>>();
@@ -49,7 +49,7 @@ public class PlotFactory
         }
     }
 
-    public PlotFactory(string[] paths)
+    public AnalyzerEngine(string[] paths)
     {
         List<IRetentionTimeAlignable>[] psmData = new List<IRetentionTimeAlignable>[paths.Length];
         Parallel.For(0, psmData.Length, i=>
@@ -67,13 +67,15 @@ public class PlotFactory
                     .Cast<IRetentionTimeAlignable>().ToList());
         });
 
-        var filteredPsmData = psmData.SelectMany(x => x.GroupBy(i => i.FileName)).ToList();
+        var filteredPsmData = psmData.SelectMany(x => x
+            .GroupBy(i => i.FileName)).ToList();
         
         var filteredPsms = new List<IRetentionTimeAlignable>();
 
         foreach (var file in filteredPsmData)
         {
-            var FullSequenceGrouped = file.GroupBy(x => x.FullSequence).ToList();
+            var FullSequenceGrouped = file
+                .GroupBy(x => x.FullSequence).ToList();
 
             var toReplace = new List<IRetentionTimeAlignable>();
             foreach (var sequence in FullSequenceGrouped)
@@ -94,7 +96,7 @@ public class PlotFactory
         CommandLineParser(args);
 
 
-        var plotFactory = new PlotFactory(
+        var analyzerEngine = new AnalyzerEngine(
             options.First(x => x.Key == "--files").Value.ToArray()); 
             //options.First(x => x.Key == "--labels").Value.ToArray());
 
@@ -130,6 +132,13 @@ public class PlotFactory
                 RetentionTimeAligner aligner = new RetentionTimeAligner(AlignablePsms);
                 aligner.Calibrate();
                 RetentionTimeAlignerExtensionMethods.SaveResults(aligner, Path.Join(outputDirectory, "RTLib.json"));
+                break;
+
+            case "RetentionTimeAligner":
+                // calibrates the files and add a time shift to each peptide
+                RetentionTimeAligner aliger = new RetentionTimeAligner(AlignablePsms);
+                aliger.Calibrate();
+                // returns a tsv with the mean and median time retention shift of the file
                 break;
         }
     }

@@ -6,6 +6,10 @@ using System.Xml;
 namespace MassSpectrometry;
 public static class RetentionTimeAlignerExtensionMethods
 {
+    public static void SaveAlignerResultAsTsv()
+    {
+
+    }
     public static void SaveResults(RetentionTimeAligner aligner, string path)
     {
         string jsonString = JsonSerializer.Serialize(aligner.HarmonizedSpecies);

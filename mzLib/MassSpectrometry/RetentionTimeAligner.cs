@@ -51,7 +51,8 @@ public class RetentionTimeAligner
         }
 
         // One iteration of PairwiseCalibration to set an initial calibration
-        foreach (var file in FilesInHarmonizer.Where(x => !x.Key.Equals(firstLeader.Key)))
+        foreach (var file in FilesInHarmonizer
+                     .Where(x => !x.Key.Equals(firstLeader.Key))) 
             InitialPairWiseCalibration(file.Key);
     }
 

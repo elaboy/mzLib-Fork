@@ -14,6 +14,18 @@ namespace Test;
 public class RtLibTest
 {
     [Test]
+    public void TestRtLibOnSamDataOne()
+    {
+        RtLib rtLib = new RtLib(new List<string>()
+            {
+                @"D:\16O-18O Inclusion List\BA389B Fractions\Standard\Task3-SearchTask\AllPeptides.psmtsv"
+            },
+            @"D:\testing.csv", false);
+
+        int zero = 0;
+    }
+
+    [Test]
     public void TestRtLib11MannFiles()
     {
         RtLib rtLib = new RtLib(new List<string>()
@@ -34,29 +46,29 @@ public class RtLibTest
         int zero = 0;
     }
 
-    [Test]
-    public void TestLoadingRtLib()
-    {
-        RtLib loadedRtLib = new RtLib(@"E:\rtLib2.json");
+    //[Test]
+    //public void TestLoadingRtLib()
+    //{
+    //    RtLib loadedRtLib = new RtLib(@"E:\rtLib2.json");
 
-        // spit all full sequences into a tsv with the last rt in each list
-        using(var writer = new StreamWriter(@"E:\rtLib2.csv"))
-        using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
-        {
-            List<string> header = new List<string>();
-            header.Add("FullSequence");
-            header.Add("CalibratedRetentionTime");
-            foreach (var kvp in loadedRtLib.Results)
-            {
-                List<string> record = new List<string>();
-                record.Add(kvp.Key);
-                record.Add(kvp.Value.Last().ToString());
+    //    // spit all full sequences into a tsv with the last rt in each list
+    //    using(var writer = new StreamWriter(@"E:\rtLib2.csv"))
+    //    using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+    //    {
+    //        List<string> header = new List<string>();
+    //        header.Add("FullSequence");
+    //        header.Add("CalibratedRetentionTime");
+    //        foreach (var kvp in loadedRtLib.FileNamesLightWeightPsms)
+    //        {
+    //            List<string> record = new List<string>();
+    //            record.Add(kvp.Key);
+    //            record.Add(kvp.Value.Last().ToString());
 
-                csv.WriteField(record);
-                csv.NextRecord();
-            }
-        }
-    }
+    //            csv.WriteField(record);
+    //            csv.NextRecord();
+    //        }
+    //    }
+    //}
 
     [Test]
     public void TestAlignerWithChronologer()

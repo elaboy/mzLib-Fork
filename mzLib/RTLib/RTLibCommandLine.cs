@@ -1,13 +1,18 @@
-﻿using System.Diagnostics;
+﻿using System.ComponentModel.Design;
+using System.Diagnostics;
+using System.Globalization;
 using System.IO;
+using System.IO.Enumeration;
 using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
+using CsvHelper;
 using Easy.Common.Extensions;
 using MassSpectrometry;
 using MathNet.Numerics.Statistics;
 using Microsoft.ML;
 using Nett;
 using Proteomics.RetentionTimePrediction.Chronologer;
+using Readers;
 using TorchSharp;
 
 namespace RTLib;
@@ -55,106 +60,103 @@ public class RtLibCommandLine
 
 }
 
+public class LightWeightPsm : IRetentionTimeAlignable
+{
+    public string FileName { get; set; }
+    public float RetentionTime { get; set; }
+    public float CalibratedRetentionTime { get; set; }
+    public float ChronologerHI { get; set; }
+    public string BaseSequence { get; set; }
+    public string FullSequence { get; set; }
+}
+
 public class RtLib
 {
     private List<string> ResultsPath { get; }
-    private string OutputPath { get;}
-    public Dictionary<string, List<float>> Results { get; }
+    private string OutputPath { get; }
+    public Dictionary<string, List<LightWeightPsm>> FileNamesLightWeightPsms { get; }
 
-    public RtLib(string rtLibPath)
-    {
-        Results = Load(rtLibPath);
-    }
+    public List<IRetentionTimeAlignable> AlignedPsms = new();
 
     public RtLib(List<string> resultsPath, string outputPath, bool useChronologer)
     {
         ResultsPath = resultsPath;
         OutputPath = outputPath;
-        Results = new Dictionary<string, List<float>>();
+        FileNamesLightWeightPsms = new Dictionary<string, List<LightWeightPsm>>();
 
-        Task<List<IRetentionTimeAlignable>>[] dataLoader = new Task<List<IRetentionTimeAlignable>>[ResultsPath.Count];
+        var dataLoader = Readers.FileReader.ReadFile<PsmFromTsvFile>(ResultsPath[0]);
+        dataLoader.LoadResults();
 
-        for (int i = 0; i < ResultsPath.Count; i++)
+        var dataLoadedAsIRetentionTimeAlignable = dataLoader
+            .Where(item => item.AmbiguityLevel == "1" & item.DecoyContamTarget == "T")
+            .Cast<IRetentionTimeAlignable>()
+            .ToList();
+
+        var distinctFilesWithinResults = dataLoadedAsIRetentionTimeAlignable
+            .GroupBy(x => x.FileName).ToList();
+
+        for (int i = 0; i < distinctFilesWithinResults.Count(); i++)
         {
-            dataLoader[i] = LoadFileResultsAsync(ResultsPath[i]);
-        }
-        dataLoader[0].Start();
-
-        for(int i = 0; i < ResultsPath.Count; i++) 
-        {
-            dataLoader[i].Wait();
-            
-            // do we want to use the chronologer HI instead of the scan reported retention time 
-            if (useChronologer)
-            {
-                string[] baseSequencesArray = dataLoader[i].Result.Select(x => x.BaseSequence).ToArray();
-                string[] fullSequencesArray = dataLoader[i].Result.Select(x => x.FullSequence).ToArray();
-                var predictions = ChronologerEstimator.PredictRetentionTime(baseSequencesArray, fullSequencesArray);
-                Parallel.For(0, predictions.Length, predictionIndex =>
-                {
-                    dataLoader[i].Result[predictionIndex].ChronologerHI = predictions[predictionIndex].IsDefault()
-                        ? -1
-                        : predictions[predictionIndex];
-                });
-            }
-            var fullSequences = dataLoader[i].Result.GroupBy(x => x.FullSequence);
-            if (Results.Count > 0)
+            if (FileNamesLightWeightPsms.Count > 0)
             {
                 List<IRetentionTimeAlignable> newSpecies = new();
 
-                foreach (var fullSequence in fullSequences)
+                foreach (var file in distinctFilesWithinResults)
                 {
-                    if (!Results.ContainsKey(fullSequence.Key))
+                    foreach (var psm in file)
                     {
-                        Results.Add(fullSequence.Key, new List<float>());
-                        Results[fullSequence.Key].AddRange(fullSequence.Select(x => x.RetentionTime));
-                    }
-                    else if (Results.ContainsKey(fullSequence.Key))
-                    {
-                        foreach (var species in fullSequence)
+
+                        if (!FileNamesLightWeightPsms.ContainsKey(psm.FullSequence))
                         {
-                            newSpecies.Add(species);
+                            FileNamesLightWeightPsms.Add(file.Key, new List<LightWeightPsm>());
+                            FileNamesLightWeightPsms[file.Key].AddRange(file
+                                .Select(x => new LightWeightPsm()
+                                {
+                                    BaseSequence = x.BaseSequence,
+                                    FileName = x.FileName,
+                                    FullSequence = x.FullSequence,
+                                    RetentionTime = x.RetentionTime
+                                }));
+                        }
+                        else
+                        {
+                            newSpecies.Add(psm);
                         }
                     }
                 }
                 // Calibrate
-                Aligner aligner = new Aligner(Results, newSpecies);
-                // Start next loading task
-                if (i < ResultsPath.Count - 1)
-                {
-                    dataLoader[i+1].Start();
-                }
+                Aligner aligner = new Aligner(FileNamesLightWeightPsms, newSpecies);
                 aligner.Align(useChronologer);
 
-                Results = aligner.GetResults();
+                AlignedPsms = aligner.GetResults();
                 aligner.Dispose();
             }
             else
             {
-                if (i < ResultsPath.Count - 1)
+                var file = distinctFilesWithinResults.First();
+                FileNamesLightWeightPsms.Add(file.Key, new List<LightWeightPsm>());
+                FileNamesLightWeightPsms[file.Key].AddRange(file.Select(x => new LightWeightPsm()
                 {
-                    dataLoader[i + 1].Start();
-                }
-                // all gets inserted, it's the first file
-                foreach (var fullSequence in fullSequences)
-                {
-                    Results.Add(fullSequence.Key, new List<float>());
-                    Results[fullSequence.Key].AddRange(fullSequence.Select(x => x.RetentionTime));
-                }
+                    BaseSequence = x.BaseSequence,
+                    FileName = x.FileName,
+                    FullSequence = x.FullSequence,
+                    RetentionTime = x.RetentionTime
+                }));
+
             }
-            Debug.WriteLine($"file: {i} of {Results.Count}");
+            Debug.WriteLine($"file: {i} of {FileNamesLightWeightPsms.Count}");
             //dataLoader[i].Result.Clear();
         }
-        Write();
+        WriteTsv();
     }
 
     public List<IRetentionTimeAlignable> LoadFileResults(string path)
     {
         var file = new Readers.PsmFromTsvFile(path);
         file.LoadResults();
-            
+
         return file.Results
-                .Where(item => item.AmbiguityLevel == "1")
+                .Where(item => item.AmbiguityLevel == "1" & item.DecoyContamTarget == "T")
                 .Cast<IRetentionTimeAlignable>()
                 .ToList();
 
@@ -168,9 +170,27 @@ public class RtLib
 
     public void Write()
     {
-        string jsonString = JsonSerializer.Serialize(Results);
+        string jsonString = JsonSerializer.Serialize(FileNamesLightWeightPsms);
 
         File.WriteAllText(OutputPath, jsonString);
+    }
+
+    public void WriteTsv()
+    {
+        var fileNameGroups = FileNamesLightWeightPsms.GroupBy(x => x.Key);
+        using (var writer = new StreamWriter(OutputPath))
+        using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+        {
+            foreach (var file in fileNameGroups)
+            {
+                var fileTimeShift = file
+                    .SelectMany(x => x.Value)
+                    .Select(i => i.RetentionTime - i.CalibratedRetentionTime).Mean();
+
+                writer.WriteLine($"{file.Key},{fileTimeShift}");
+            }
+        }
+
     }
 
     public static Dictionary<string, List<float>> Load(string rtLibPath)
@@ -185,12 +205,12 @@ public class RtLib
 
 public class Aligner : IDisposable
 {
-    private Dictionary<string, List<float>> alignedSpecies { get; }
-    private List<IRetentionTimeAlignable> speciesToAlign { get; }
-    public Aligner(Dictionary< string, List<float>> speciesAligned, List<IRetentionTimeAlignable> setOfSpeciesToAlign)
+    private Dictionary<string, List<LightWeightPsm>> _alignedSpecies { get; }
+    private List<IRetentionTimeAlignable> _speciesToAlign { get; }
+    public Aligner(Dictionary<string, List<LightWeightPsm>> speciesAligned, List<IRetentionTimeAlignable> setOfSpeciesToAlign)
     {
-        alignedSpecies = speciesAligned;
-        speciesToAlign = setOfSpeciesToAlign;
+        _alignedSpecies = speciesAligned;
+        _speciesToAlign = setOfSpeciesToAlign;
     }
 
     public void Align(bool useChronologer)
@@ -202,35 +222,51 @@ public class Aligner : IDisposable
 
         if (useChronologer)
         {
-            foreach (var species in speciesToAlign)
+            foreach (var species in _speciesToAlign)
             {
-                if (alignedSpecies.ContainsKey(species.FullSequence) & alignedSpecies[species.FullSequence].Count > 1)
+                if (_alignedSpecies.ContainsKey(species.FullSequence) & _alignedSpecies[species.FullSequence].Count > 1)
                 {
-                    alignedSpecies[species.FullSequence].Add(species.RetentionTime);
+                    _alignedSpecies[species.FullSequence].Add(new LightWeightPsm()
+                    {
+                        FullSequence = species.FullSequence,
+                        BaseSequence = species.BaseSequence,
+                        FileName = species.FileName,
+                        RetentionTime = species.RetentionTime
+                    });
                 }
                 else
                 {
                     toPredict.Add(new PreCalibrated()
                     {
+                        FileName = species.FileName,
                         FullSequence = species.FullSequence,
-                        UnCalibratedRetentionTime = species.ChronologerHI
+                        BaseSequence = species.BaseSequence,
+                        UnCalibratedRetentionTime = species.RetentionTime
                     });
                 }
             }
         }
         else
         {
-            foreach (var species in speciesToAlign)
+            foreach (var species in _speciesToAlign)
             {
-                if (alignedSpecies.ContainsKey(species.FullSequence) & alignedSpecies[species.FullSequence].Count > 1)
+                if (_alignedSpecies.ContainsKey(species.FullSequence))
                 {
-                    alignedSpecies[species.FullSequence].Add(species.RetentionTime);
+                    _alignedSpecies[species.FullSequence].Add(new LightWeightPsm()
+                    {
+                        FullSequence = species.FullSequence,
+                        BaseSequence = species.BaseSequence,
+                        FileName = species.FileName,
+                        RetentionTime = species.RetentionTime
+                    });
                 }
                 else
                 {
                     toPredict.Add(new PreCalibrated()
                     {
+                        FileName = species.FileName,
                         FullSequence = species.FullSequence,
+                        BaseSequence = species.BaseSequence,
                         UnCalibratedRetentionTime = species.RetentionTime
                     });
                 }
@@ -238,26 +274,41 @@ public class Aligner : IDisposable
         }
 
 
-        (string, Calibrated)[] calibrated = new (string, Calibrated)[toPredict.Count];
+        (string FileName, string FullSequence, float RetentionTime, Calibrated)[] calibrated =
+            new (string FileName, string FullSequence, float RetentionTime, Calibrated)[toPredict.Count];
 
         var predictionEngine = GetPredictionEngine(useChronologer);
 
-        Parallel.For(0, calibrated.Length, i =>
-        {
-            calibrated[i] = (toPredict[i].FullSequence, predictionEngine.Predict(toPredict[i]));
-        });
+        Parallel.For(0, calibrated.Length,
+            i =>
+            {
+                calibrated[i] = (toPredict[i].FileName, toPredict[i].FullSequence,
+                    toPredict[i].UnCalibratedRetentionTime, predictionEngine.Predict(toPredict[i]));
+            });
 
-        // add them into the alignedSpecies
+        // add them into the _alignedSpecies
         foreach (var predictions in calibrated)
         {
-            if (alignedSpecies.ContainsKey(predictions.Item1))
+            if (_alignedSpecies.ContainsKey(predictions.Item1))
             {
-                alignedSpecies[predictions.Item1].Add(predictions.Item2.CalibratedRetentionTime);
+                _alignedSpecies[predictions.Item1].Add(new LightWeightPsm()
+                {
+                    FullSequence = predictions.FullSequence,
+                    FileName = predictions.FileName,
+                    RetentionTime = predictions.RetentionTime,
+                    CalibratedRetentionTime = predictions.Item4.CalibratedRetentionTime
+                });
             }
             else
             {
-                alignedSpecies.Add(predictions.Item1,
-                    new List<float>() { predictions.Item2.CalibratedRetentionTime });
+                _alignedSpecies.Add(predictions.FileName, new List<LightWeightPsm>());
+                _alignedSpecies[predictions.FileName].Add(new LightWeightPsm()
+                {
+                    FullSequence = predictions.FullSequence,
+                    FileName = predictions.FileName,
+                    RetentionTime = predictions.RetentionTime,
+                    CalibratedRetentionTime = predictions.Item4.CalibratedRetentionTime
+                });
             }
         }
         Dispose();
@@ -271,7 +322,9 @@ public class Aligner : IDisposable
 
         // need to separate the anchors from the novel species to the library, the next loop crashes. Need to bring the Intersects lines from previos code iteration (it worked)
         // get anchor available
-        var anchorsBetweenBothSets = speciesToAlign.Where(x => alignedSpecies.ContainsKey(x.FullSequence)).DistinctBy(x => x.FullSequence);
+        var anchorsBetweenBothSets = _speciesToAlign
+            .Where(x => _alignedSpecies.ContainsKey(x.FullSequence))
+            .DistinctBy(x => x.FullSequence);
 
         // Prepare the data for the dataview
         if (useChronologer)
@@ -281,7 +334,7 @@ public class Aligner : IDisposable
                 PreCalibratedList.Add(new PreCalibrated()
                 {
                     FullSequence = anchor.FullSequence,
-                    AnchorRetentionTime = alignedSpecies[anchor.FullSequence].Select(x => x).Median(),
+                    //AnchorRetentionTime = _alignedSpecies[anchor.FullSequence].Select(x => x).Median(),
                     UnCalibratedRetentionTime = anchor.ChronologerHI
                 });
             }
@@ -293,13 +346,15 @@ public class Aligner : IDisposable
                 PreCalibratedList.Add(new PreCalibrated()
                 {
                     FullSequence = anchor.FullSequence,
-                    AnchorRetentionTime = alignedSpecies[anchor.FullSequence].Select(x => x).Median(),
+                    FileName = anchor.FileName,
+                    AnchorRetentionTime = _alignedSpecies[anchor.FullSequence].Select(x => x.RetentionTime).Median(),
                     UnCalibratedRetentionTime = anchor.RetentionTime
                 });
             }
         }
 
-        var dataView = mlContext.Data.LoadFromEnumerable(PreCalibratedList.Where(x => x.UnCalibratedRetentionTime > -1).ToArray());
+        var dataView = mlContext.Data.LoadFromEnumerable(
+            PreCalibratedList.Where(x => x.UnCalibratedRetentionTime > -1).ToArray());
 
         // Make the model pipeline
         var pipeline = mlContext.Transforms
@@ -319,11 +374,22 @@ public class Aligner : IDisposable
         return predictionEngine;
     }
 
-    public Dictionary<string, List<float>> GetResults() => alignedSpecies;
+    public List<IRetentionTimeAlignable> GetResults()
+    {
+        List<IRetentionTimeAlignable> alignedSpecies = new();
+        foreach (var file in _alignedSpecies)
+        {
+            alignedSpecies.AddRange(file.Value);
+        }
+
+        return alignedSpecies;
+    }
+
+
 
     public void Dispose()
     {
-        alignedSpecies.Clear();
-        speciesToAlign.Clear();
+        _alignedSpecies.Clear();
+        _speciesToAlign.Clear();
     }
 }
