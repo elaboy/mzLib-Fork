@@ -1,15 +1,10 @@
-﻿using System.Diagnostics;
-using System.IO;
-using System.Reflection.Metadata.Ecma335;
-using System.Text.Json;
-using Easy.Common.Extensions;
+﻿using Easy.Common.Extensions;
 using MassSpectrometry;
 using MathNet.Numerics.Statistics;
 using Microsoft.ML;
-using Nett;
 using Proteomics.RetentionTimePrediction.Chronologer;
-using Readers;
-using TorchSharp;
+using System.Diagnostics;
+using System.Text.Json;
 
 namespace RTLib;
 public class RtLibCommandLine
@@ -68,7 +63,7 @@ public class LightPsm : IRetentionTimeAlignable
 public class RtLib
 {
     private List<string> ResultsPath { get; }
-    private string OutputPath { get;}
+    private string OutputPath { get; }
     public Dictionary<string, List<float>> Results { get; }
 
     public RtLib(string rtLibPath)
@@ -90,10 +85,10 @@ public class RtLib
         }
         dataLoader[0].Start();
 
-        for(int i = 0; i < ResultsPath.Count; i++) 
+        for (int i = 0; i < ResultsPath.Count; i++)
         {
             dataLoader[i].Wait();
-            
+
             // do we want to use the chronologer HI instead of the scan reported retention time 
             if (useChronologer)
             {
@@ -132,7 +127,7 @@ public class RtLib
                 // Start next file loading task
                 if (i < ResultsPath.Count - 1)
                 {
-                    dataLoader[i+1].Start();
+                    dataLoader[i + 1].Start();
                 }
                 aligner.Align(useChronologer);
 
@@ -164,19 +159,22 @@ public class RtLib
     {
         var file = new Readers.PsmFromTsvFile(path);
         file.LoadResults();
-        
-        var results =  file.Results
+
+        var results = file.Results
                 .Where(item => item.AmbiguityLevel == "1")
                 .ToList();
-        
+
         List<LightPsm> lightPsms = new List<LightPsm>();
         foreach (var item in results)
         {
-            lightPsms.Add(new LightPsm(){BaseSequence = item.BaseSequence,
-                ChronologerHI = item.ChronologerHI, 
-                FileName = item.FileName, 
-                FullSequence = item.FullSequence, 
-                RetentionTime = (float)item.RetentionTime.Value});
+            lightPsms.Add(new LightPsm()
+            {
+                BaseSequence = item.BaseSequence,
+                ChronologerHI = item.ChronologerHI,
+                FileName = item.FileName,
+                FullSequence = item.FullSequence,
+                RetentionTime = (float)item.RetentionTime.Value
+            });
         }
 
         return lightPsms;
@@ -210,7 +208,7 @@ public class Aligner : IDisposable
 {
     private Dictionary<string, List<float>> alignedSpecies { get; }
     private List<IRetentionTimeAlignable> speciesToAlign { get; }
-    public Aligner(Dictionary< string, List<float>> speciesAligned, List<IRetentionTimeAlignable> setOfSpeciesToAlign)
+    public Aligner(Dictionary<string, List<float>> speciesAligned, List<IRetentionTimeAlignable> setOfSpeciesToAlign)
     {
         alignedSpecies = speciesAligned;
         speciesToAlign = setOfSpeciesToAlign;
