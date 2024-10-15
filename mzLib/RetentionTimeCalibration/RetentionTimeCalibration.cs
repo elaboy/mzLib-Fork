@@ -84,39 +84,39 @@ public class SpeciesComparer : IEqualityComparer<Species>
     }
 }
 
-public class FileResultsMapper
-{
-    public PsmFromTsvFile Results { get; set; }
-    public Mzml MzmlFile { get; set; }
-    public List<Species> Species { get; set; }
+//public class FileResultsMapper
+//{
+//    public PsmFromTsvFile Results { get; set; }
+//    public Mzml MzmlFile { get; set; }
+//    public List<Species> Species { get; set; }
 
-    public FileResultsMapper(PsmFromTsvFile psmFromTsvFile, Mzml mzmlFile)
-    {
-        Results = psmFromTsvFile;
-        MzmlFile = mzmlFile;
-        Species = GetSpecies();
-    }
+//    public FileResultsMapper(PsmFromTsvFile psmFromTsvFile, Mzml mzmlFile)
+//    {
+//        Results = psmFromTsvFile;
+//        MzmlFile = mzmlFile;
+//        Species = GetSpecies();
+//    }
 
-    public List<Species> GetSpecies()
-    {
-        List<Species> species = new List<Species>();
+//    public List<Species> GetSpecies()
+//    {
+//        List<Species> species = new List<Species>();
 
-        foreach (var psm in Results.Results)
-        {
-            MsDataScan msDataScan = MzmlFile.GetOneBasedScan(psm.PrecursorScanNum);
-            Species newSpecies = new Species(
-                psm.FullSequence,
-                psm.BaseSeq,
-                psm.FileNameWithoutExtension,
-                psm.RetentionTime.Value,
-                msDataScan);
+//        foreach (var psm in Results.Results)
+//        {
+//            MsDataScan msDataScan = MzmlFile.GetOneBasedScan(psm.PrecursorScanNum);
+//            Species newSpecies = new Species(
+//                psm.FullSequence,
+//                psm.BaseSeq,
+//                psm.FileNameWithoutExtension,
+//                psm.RetentionTime.Value,
+//                msDataScan);
 
-            species.Add(newSpecies);
-        }
+//            species.Add(newSpecies);
+//        }
 
-        return species;
-    }
-}
+//        return species;
+//    }
+//}
 
 
 public static class Aligner

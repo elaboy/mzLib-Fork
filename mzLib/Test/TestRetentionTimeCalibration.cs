@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Windows.Navigation;
-using Easy.Common.Extensions;
-using MassSpectrometry;
+﻿using MassSpectrometry;
 using NUnit.Framework;
 using Readers;
-using Mzml = IO.MzML.Mzml;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Test;
 
@@ -23,7 +19,12 @@ public class TestRetentionTimeCalibration
         int numberOfDataFilesToMake = 3;
         int numberOfDataScans = 10;
 
-        _dataFiles = new MsDataFile[numberOfDataFilesToMake];
+        _dataFiles = new MsDataFile[]
+        {
+            MakeFakeMsDataFile(_fullSequences.First().Length),
+            MakeFakeMsDataFile(_fullSequences.First().Length),
+            MakeFakeMsDataFile(_fullSequences.First().Length)
+        };
         _fullSequences = new List<string[]>()
         {
             // File 1
