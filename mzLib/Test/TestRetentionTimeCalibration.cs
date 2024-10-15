@@ -4,6 +4,7 @@ using NUnit.Framework;
 using Readers;
 using System.Collections.Generic;
 using System.Linq;
+using RetentionTimeCalibration;
 
 namespace Test;
 
@@ -231,20 +232,17 @@ public class TestRetentionTimeCalibration
 
 
     [Test]
-    public void TestRetentionTimeCalibrationConstructor()
+    public void TestRetentionTimeCalibrationMethods()
     {
         // Act
         RetentionTimeCalibration.RetentionTimeCalibration retentionTimeCalibration =
             new RetentionTimeCalibration.RetentionTimeCalibration(_dataFiles, GetFullSequences(), GetRetentionTimes());
 
-        // Assert
-        Assert.That(retentionTimeCalibration.ResultsFiles.Count == 1);
-    }
+        Assert.That(retentionTimeCalibration.ResultsFiles.Count == 3);
 
-    [Test]
-    public void TestGetAnchors()
-    {
+        List<Species> anchors = retentionTimeCalibration.GetAnchors();
 
+        int stopper = 0;
     }
 
     [Test]

@@ -43,7 +43,8 @@ public class RetentionTimeCalibration
             FileName = x.Key.SourceFile.FileName,
             FullSequence = tuple.Item1,
             ScanRetentionTime = tuple.Item2,
-            MsDataScan = x.Key.GetOneBasedScan(x.Key.GetClosestOneBasedSpectrumNumber(tuple.Item2))
+            MsDataScan = x.Key.Scans.First()
+            //MsDataScan = x.Key.GetOneBasedScan(x.Key.GetClosestOneBasedSpectrumNumber(tuple.Item2)) todo: needs to be implemented later
         })).ToList();
 
         List<Species> anchorSpecies =
