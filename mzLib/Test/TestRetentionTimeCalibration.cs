@@ -19,12 +19,7 @@ public class TestRetentionTimeCalibration
         int numberOfDataFilesToMake = 3;
         int numberOfDataScans = 10;
 
-        _dataFiles = new MsDataFile[]
-        {
-            MakeFakeMsDataFile(_fullSequences.First().Length),
-            MakeFakeMsDataFile(_fullSequences.First().Length),
-            MakeFakeMsDataFile(_fullSequences.First().Length)
-        };
+
         _fullSequences = new List<string[]>()
         {
             // File 1
@@ -189,6 +184,12 @@ public class TestRetentionTimeCalibration
             },
         };
 
+        _dataFiles = new MsDataFile[]
+        {
+            MakeFakeMsDataFile(_fullSequences.First().Length),
+            MakeFakeMsDataFile(_fullSequences.First().Length),
+            MakeFakeMsDataFile(_fullSequences.First().Length)
+        };
 
     }
 
