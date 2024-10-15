@@ -195,10 +195,9 @@ public class TestRetentionTimeCalibration
     #region Helper Functions
     private MsDataFile MakeFakeMsDataFile(int numberOfScans)
     {
-        MsDataFile msDataFile = new GenericMsDataFile(new MsDataScan[numberOfScans], new SourceFile(
-            string.Empty, string.Empty, string.Empty,
-            string.Empty, string.Empty, string.Empty));
-
+        MsDataFile msDataFile = new GenericMsDataFile(new MsDataScan[numberOfScans],
+            new SourceFile(null, null,
+                null, null, null));
         return msDataFile;
     }
 
