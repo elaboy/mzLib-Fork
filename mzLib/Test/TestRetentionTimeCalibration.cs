@@ -191,6 +191,7 @@ public class TestRetentionTimeCalibration
 
     }
 
+    #region Helper Functions
     private MsDataFile MakeFakeMsDataFile(int numberOfScans)
     {
         MsDataFile msDataFile = new GenericMsDataFile(new MsDataScan[numberOfScans], new SourceFile(
@@ -200,28 +201,40 @@ public class TestRetentionTimeCalibration
         return msDataFile;
     }
 
+    private Dictionary<string, List<string>> GetFullSequences()
+    {
+        Dictionary<string, List<string>> dict = new();
+        for (int i = 0; i < _dataFiles.Length; i++)
+        {
+            dict[_dataFiles[i].FilePath] = _fullSequences[i].ToList();
+        }
+
+        return dict;
+    }
+
+    private Dictionary<string, List<double>> GetRetentionTimes()
+    {
+        Dictionary<string, List<double>> dict = new();
+        for (int i = 0; i < _dataFiles.Length; i++)
+        {
+            dict[_dataFiles[i].FilePath] = _retentionTimes[i].ToList();
+        }
+
+        return dict;
+    }
+
+    #endregion
+
+
     [Test]
     public void TestRetentionTimeCalibrationConstructor()
     {
-        // Arrange
-        string peptidesResultsFilePath =
-            @"E:\DatasetsForRT\Mann_11cell_lines\A549\2024-07-10-15-53-11_ClassigBigSearch\Task4-SearchTask\Individual File Results\20100604_Velos1_TaGe_SA_A549_1-calib-averaged_Peptides.psmtsv";
-        string quantifiedPeakFilePath =
-            @"E:\\DatasetsForRT\\Mann_11cell_lines\\A549\\2024-07-10-15-53-11_ClassigBigSearch\\Task4-SearchTask\\Individual File Results\\20100604_Velos1_TaGe_SA_A549_1-calib-averaged_QuantifiedPeaks.tsv\";
-        string mzmlPath =
-            @"E:\DatasetsForRT\Mann_11cell_lines\A549\2024-07-10-15-53-11_ClassigBigSearch\Task1-CalibrateTask\20100604_Velos1_TaGe_SA_A549_1-calib.mzML";
-        List<(string, string, string)> resultsFilesPath = new List<(string, string, string)>
-            { (peptidesResultsFilePath, quantifiedPeakFilePath, mzmlPath) };
-
         // Act
         RetentionTimeCalibration.RetentionTimeCalibration retentionTimeCalibration =
-            new RetentionTimeCalibration.RetentionTimeCalibration(resultsFilesPath);
+            new RetentionTimeCalibration.RetentionTimeCalibration(_dataFiles, GetFullSequences(), GetRetentionTimes());
 
         // Assert
         Assert.That(retentionTimeCalibration.ResultsFiles.Count == 1);
-        Assert.That(retentionTimeCalibration.ResultsFiles.First().Species.Count > 0);
-        Assert.That(retentionTimeCalibration.ResultsFiles.First().MzmlFile.IsNotNullOrEmpty());
-        Assert.That(retentionTimeCalibration.ResultsFiles.First().Results.Results.Count > 0);
     }
 
     [Test]
