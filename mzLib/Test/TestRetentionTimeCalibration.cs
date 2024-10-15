@@ -1,4 +1,5 @@
-﻿using MassSpectrometry;
+﻿using Easy.Common.Extensions;
+using MassSpectrometry;
 using NUnit.Framework;
 using Readers;
 using System.Collections.Generic;
@@ -186,15 +187,15 @@ public class TestRetentionTimeCalibration
 
         _dataFiles = new MsDataFile[]
         {
-            MakeFakeMsDataFile(_fullSequences.First().Length),
-            MakeFakeMsDataFile(_fullSequences.First().Length),
-            MakeFakeMsDataFile(_fullSequences.First().Length)
+            MakeFakeMsDataFile(_fullSequences.First().Length, "file1"),
+            MakeFakeMsDataFile(_fullSequences.First().Length, "file2"),
+            MakeFakeMsDataFile(_fullSequences.First().Length, "file3")
         };
 
     }
 
     #region Helper Functions
-    private MsDataFile MakeFakeMsDataFile(int numberOfScans)
+    private MsDataFile MakeFakeMsDataFile(int numberOfScans, string fakeFilePathNameToUse)
     {
         MsDataFile msDataFile = new GenericMsDataFile(new MsDataScan[numberOfScans],
             new SourceFile(null, null,
@@ -205,9 +206,10 @@ public class TestRetentionTimeCalibration
     private Dictionary<string, List<string>> GetFullSequences()
     {
         Dictionary<string, List<string>> dict = new();
+
         for (int i = 0; i < _dataFiles.Length; i++)
         {
-            dict[_dataFiles[i].FilePath] = _fullSequences[i].ToList();
+            dict.Add(_dataFiles[i].FilePath, _fullSequences[i].ToList());
         }
 
         return dict;
@@ -218,7 +220,8 @@ public class TestRetentionTimeCalibration
         Dictionary<string, List<double>> dict = new();
         for (int i = 0; i < _dataFiles.Length; i++)
         {
-            dict[_dataFiles[i].FilePath] = _retentionTimes[i].ToList();
+            dict.Add(_dataFiles[i].FilePath, _retentionTimes[i].ToList());
+
         }
 
         return dict;
