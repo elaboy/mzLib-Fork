@@ -199,7 +199,7 @@ public class TestRetentionTimeCalibration
     {
         MsDataFile msDataFile = new GenericMsDataFile(new MsDataScan[numberOfScans],
             new SourceFile(null, null,
-                null, null, null));
+                null, null, fakeFilePathNameToUse, null));
         return msDataFile;
     }
 
