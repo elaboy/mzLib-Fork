@@ -3,48 +3,51 @@ using Microsoft.ML;
 using Microsoft.ML.Data;
 using Readers;
 using System.Data;
-using Readers.QuantificationResults;
 
 namespace RetentionTimeCalibration;
 public class RetentionTimeCalibration
 {
-    public List<FileResultsMapper> ResultsFiles { get; set; }
-    public List<Species> CalibratedSpecies { get; set; }
+    public Dictionary<MsDataFile, List<(string, double)>> ResultsFiles { get; set; }
+    public List<Species> CalibratedSpecies { get; set; } 
     public List<Mzml> CalibratedFiles { get; set; }
 
-    public RetentionTimeCalibration(List<(
-        string peptidesResultsFilePath, 
-        string quantifiedPeakFilePath, 
-        string mzmlPath)> resultsFilesPath)
+    public RetentionTimeCalibration(MsDataFile[] dataFiles, Dictionary<string, List<string>> fullSequences,
+        Dictionary<string, List<double>> retentionTimes)
     {
-        FileResultsMapper[] resultsFiles = new FileResultsMapper[resultsFilesPath.Count];
+        Dictionary<MsDataFile, List<(string, double)>> resultsFiles = new Dictionary<MsDataFile, List<(string, double)>>();
 
-        Parallel.For(0, resultsFilesPath.Count, i =>
+        for (int i = 0; i < dataFiles.Length; i++)
         {
-            PsmFromTsvFile psmFromTsvFile = 
-                new PsmFromTsvFile(resultsFilesPath[i].peptidesResultsFilePath);
-            psmFromTsvFile.LoadResults();
+            resultsFiles[dataFiles[i]] = new List<(string, double)>();
 
-            Mzml mzmlFile = new Mzml(resultsFilesPath[i].mzmlPath);
-            mzmlFile.LoadAllStaticData();
+            // zip fullSequence list and the retentionTime list to end up with a list of tuples[fullSequence, retentionTime]
+            var fullSequencesAndRetentionTimes = fullSequences[dataFiles[i].FilePath]
+                .Zip(retentionTimes[dataFiles[i].FilePath],
+                    (fullSequence, retentionTime) => (fullSequence, retentionTime));
 
-            resultsFiles[i] = new FileResultsMapper(psmFromTsvFile, mzmlFile);
-            FileResultsMapper mapper = new FileResultsMapper(psmFromTsvFile, mzmlFile);
+            resultsFiles[dataFiles[i]].AddRange(fullSequencesAndRetentionTimes);
+        }
 
-        });
-
-        ResultsFiles = resultsFiles.ToList();
+        ResultsFiles = resultsFiles;
     }
     private void WriteCalibratedMzmls()
     {
+
         throw new NotImplementedException();
     }
 
-    private List<Species> GetAnchors()
+    public List<Species> GetAnchors()
     {
-        var allSpecies = ResultsFiles.SelectMany(x => x.Species);
+        var allSpecies = ResultsFiles.SelectMany(x => x.Value.Select(tuple => new Species
+        {
+            FileName = x.Key.FilePath,
+            FullSequence = tuple.Item1,
+            ScanRetentionTime = tuple.Item2,
+            MsDataScan = x.Key.GetOneBasedScan(x.Key.GetClosestOneBasedSpectrumNumber(tuple.Item2))
+        })).ToList();
+
         List<Species> anchorSpecies =
-            allSpecies.GroupBy(s => new { s.FullSequence, s.BaseSequence })
+            allSpecies.GroupBy(s => s.FullSequence)
                 .Where(g => g.Count() == ResultsFiles.Count)
                 .Select(g => g.First())
                 .ToList();
@@ -54,7 +57,14 @@ public class RetentionTimeCalibration
 
     private List<Species> SpeciesToPredict(List<Species> anchors)
     {
-        var allSpecies = ResultsFiles.SelectMany(x => x.Species);
+        var allSpecies = ResultsFiles.SelectMany(x => x.Value.Select(tuple => new Species
+        {
+            FileName = x.Key.FilePath,
+            FullSequence = tuple.Item1,
+            ScanRetentionTime = tuple.Item2,
+            MsDataScan = x.Key.GetOneBasedScan(x.Key.GetClosestOneBasedSpectrumNumber(tuple.Item2))
+        })).ToList();
+
         List<Species> speciesToPredict = allSpecies.Except(anchors, new SpeciesComparer()).ToList();
 
         return speciesToPredict;
@@ -65,12 +75,12 @@ public class SpeciesComparer : IEqualityComparer<Species>
 {
     public bool Equals(Species x, Species y)
     {
-        return x.FullSequence == y.FullSequence && x.BaseSequence == y.BaseSequence;
+        return x.FullSequence == y.FullSequence;
     }
 
     public int GetHashCode(Species obj)
     {
-        return HashCode.Combine(obj.FullSequence, obj.BaseSequence);
+        return HashCode.Combine(obj.FullSequence);
     }
 }
 
@@ -98,7 +108,7 @@ public class FileResultsMapper
                 psm.FullSequence,
                 psm.BaseSeq,
                 psm.FileNameWithoutExtension,
-                psm.RetentionTime.Value, 
+                psm.RetentionTime.Value,
                 msDataScan);
 
             species.Add(newSpecies);
@@ -118,7 +128,6 @@ public static class Aligner
         List<PreCalibrated> preCalibratedAnchors = anchors.Select(x => new PreCalibrated()
         {
             AnchorRetentionTime = (float)x.ScanRetentionTime,
-            BaseSequence = x.BaseSequence,
             FullSequence = x.FullSequence
         }).ToList();
 
@@ -164,38 +173,18 @@ public class Calibrated
 public class Species
 {
     public string FullSequence { get; set; }
-    public string BaseSequence { get; set; }
     public string FileName { get; set; }
-    public double? MsTwoRetentionTime { get; set; }
-    public double? PeakIntensity { get; set; }
-    public double? PeakRetentionTimeStart { get; set; }
-    public double? PeakRetentionTimeApex { get; set; }
-    public double? PeakRetentionTimeEnd { get; set; }
     public double ScanRetentionTime { get; set; }
     public MsDataScan MsDataScan { get; set; }
 
-    public Species(string fileName, string baseSequence,
-        string fullSequence, double scanRetentionTime, MsDataScan msDataScan,
-        double msTwoRetentionTime, double peakIntensity, double peakRetentionTimeStart,
-        double peakRetentionTimeApex, double peakRetentionTimeEnd)
+    public Species()
     {
-        FullSequence = fullSequence;
-        BaseSequence = baseSequence;
-        FileName = fileName;
-        ScanRetentionTime = scanRetentionTime;
-        MsDataScan = msDataScan;
-        MsTwoRetentionTime = msTwoRetentionTime;
-        PeakIntensity = peakIntensity;
-        PeakRetentionTimeStart = peakRetentionTimeStart;
-        PeakRetentionTimeApex = peakRetentionTimeApex;
-        PeakRetentionTimeEnd = peakRetentionTimeEnd;
-        ScanRetentionTime = scanRetentionTime;
+        
     }
-    public Species(string fileName, string baseSequence,
-        string fullSequence, double scanRetentionTime, MsDataScan msDataScan)
+
+    public Species(string fileName, string fullSequence, double scanRetentionTime, MsDataScan msDataScan)
     {
         FullSequence = fullSequence;
-        BaseSequence = baseSequence;
         FileName = fileName;
         ScanRetentionTime = scanRetentionTime;
         MsDataScan = msDataScan;
