@@ -209,7 +209,7 @@ public class TestRetentionTimeCalibration
 
         for (int i = 0; i < _dataFiles.Length; i++)
         {
-            dict.Add(_dataFiles[i].FilePath, _fullSequences[i].ToList());
+            dict.Add(_dataFiles[i].SourceFile.FileName, _fullSequences[i].ToList());
         }
 
         return dict;
@@ -220,7 +220,7 @@ public class TestRetentionTimeCalibration
         Dictionary<string, List<double>> dict = new();
         for (int i = 0; i < _dataFiles.Length; i++)
         {
-            dict.Add(_dataFiles[i].FilePath, _retentionTimes[i].ToList());
+            dict.Add(_dataFiles[i].SourceFile.FileName, _retentionTimes[i].ToList());
 
         }
 

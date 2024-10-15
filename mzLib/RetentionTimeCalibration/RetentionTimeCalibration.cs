@@ -21,8 +21,8 @@ public class RetentionTimeCalibration
             resultsFiles[dataFiles[i]] = new List<(string, double)>();
 
             // zip fullSequence list and the retentionTime list to end up with a list of tuples[fullSequence, retentionTime]
-            var fullSequencesAndRetentionTimes = fullSequences[dataFiles[i].FilePath]
-                .Zip(retentionTimes[dataFiles[i].FilePath],
+            var fullSequencesAndRetentionTimes = fullSequences[dataFiles[i].SourceFile.FileName]
+                .Zip(retentionTimes[dataFiles[i].SourceFile.FileName],
                     (fullSequence, retentionTime) => (fullSequence, retentionTime));
 
             resultsFiles[dataFiles[i]].AddRange(fullSequencesAndRetentionTimes);
@@ -40,7 +40,7 @@ public class RetentionTimeCalibration
     {
         var allSpecies = ResultsFiles.SelectMany(x => x.Value.Select(tuple => new Species
         {
-            FileName = x.Key.FilePath,
+            FileName = x.Key.SourceFile.FileName,
             FullSequence = tuple.Item1,
             ScanRetentionTime = tuple.Item2,
             MsDataScan = x.Key.GetOneBasedScan(x.Key.GetClosestOneBasedSpectrumNumber(tuple.Item2))
