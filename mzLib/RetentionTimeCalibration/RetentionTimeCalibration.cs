@@ -56,14 +56,16 @@ public class RetentionTimeCalibration
         return anchorSpecies;
     }
 
-    private List<Species> SpeciesToPredict(List<Species> anchors)
+    public List<Species> GetSpeciesToPredict(List<Species> anchors)
     {
         var allSpecies = ResultsFiles.SelectMany(x => x.Value.Select(tuple => new Species
         {
             FileName = x.Key.FilePath,
             FullSequence = tuple.Item1,
             ScanRetentionTime = tuple.Item2,
-            MsDataScan = x.Key.GetOneBasedScan(x.Key.GetClosestOneBasedSpectrumNumber(tuple.Item2))
+            MsDataScan = x.Key.Scans.First()
+            //MsDataScan = x.Key.GetOneBasedScan(x.Key.GetClosestOneBasedSpectrumNumber(tuple.Item2)) todo: needs to be implemented later
+
         })).ToList();
 
         List<Species> speciesToPredict = allSpecies.Except(anchors, new SpeciesComparer()).ToList();
